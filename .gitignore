@@ -11,3 +11,22 @@
 
 #!.yarn/cache
 .pnp.*
+
+# dependencies
+node_modules
+
+# build
+*dist
+
+# env
+.env
+
+# logs
+*.log
+
+# IDE
+.idea
+.vscode
+
+# OS
+.DS_Store

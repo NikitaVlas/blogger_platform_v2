@@ -1,14 +1,24 @@
 import express from "express";
+import dotenv from 'dotenv'
 import { setupApp } from "./setup-app";
+import {rundb} from "./db/mongo.db";
 
-// создание приложения
-const app = express();
-setupApp(app);
+dotenv.config()
 
-// порт приложения
-const PORT = process.env.PORT || 5001;
+const start = async () => {
+    const app = express();
+    setupApp(app);
 
-// запуск приложения
-app.listen(PORT, () => {
-    console.log(`Example app listening on port ${PORT}`);
-});
+    const port = process.env.PORT || 3000;
+    const mongoUri = process.env.MONGO_URI;
+
+    if(!mongoUri) throw new Error('MONGO_URI is not defined')
+
+    await rundb(mongoUri);
+
+    await app.listen(port, () => {
+        console.log(`Example app listening on port ${port}`);
+    });
+};
+
+start()

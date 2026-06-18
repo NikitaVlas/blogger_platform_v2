@@ -3,13 +3,16 @@
   "packageManager": "yarn@4.6.0",
   "scripts": {
     "watch": "tsc -w",
-    "dev": "nodemon --inspect dist/index.js",
+    "dev": "nodemon --inspect --watch dist dist/index.js",
     "jest": "jest -i",
     "lint": "eslint --fix .",
     "format": "prettier --write ."
   },
   "dependencies": {
-    "express": "^5.2.1"
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mongodb": "^7.3.0",
+    "mongoose": "^0.0.2-security"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
