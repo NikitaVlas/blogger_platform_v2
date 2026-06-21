@@ -1,11 +1,12 @@
-import {Collection, Db, MongoClient} from 'mongodb';
+import {Collection, Db, MongoClient, OptionalId} from 'mongodb';
+import {BlogDbModel} from "../modules/blogs/models/blog.db-model";
 
 const BLOG_COLLECTION_NAME = 'blog';
 const POST_COLLECTION_NAME = 'post';
 
 export let client: MongoClient;
 export let db: Db;
-export let blogCollection: Collection;
+export let blogCollection: Collection<OptionalId<BlogDbModel>>;
 export let postCollection: Collection;
 
 let isConnected = false;
@@ -20,7 +21,7 @@ export async function rundb(url: string) {
 
     db = client.db("blogers-platform_v2");
 
-    blogCollection = client.db().collection(BLOG_COLLECTION_NAME);
+    blogCollection = client.db().collection<OptionalId<BlogDbModel>>(BLOG_COLLECTION_NAME);
     postCollection = client.db().collection(POST_COLLECTION_NAME);
 
     isConnected = true;

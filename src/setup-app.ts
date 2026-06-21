@@ -7,7 +7,7 @@ export const setupApp = (app: Express) => {
 
     // основной роут
     app.get("/", (req, res) => {
-        res.status(200).send("Hello blog!!!");
+        res.status(200).send("Hello blog!");
     });
 
     app.use(RouterPath.blogs, blogsRoutes);
