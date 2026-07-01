@@ -5,4 +5,5 @@ export interface PostViewModel {
     content: string;
     blogId: string;
     blogName: string;
+    createdAt: Date;
 }

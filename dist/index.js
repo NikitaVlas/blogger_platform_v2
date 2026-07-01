@@ -22,11 +22,18 @@ const start = () => __awaiter(void 0, void 0, void 0, function* () {
     (0, setup_app_1.setupApp)(app);
     const port = process.env.PORT || 3000;
     const mongoUri = process.env.MONGO_URI;
-    if (!mongoUri)
-        throw new Error('MONGO_URI is not defined');
-    yield (0, mongo_db_1.rundb)(mongoUri);
     yield app.listen(port, () => {
         console.log(`Example app listening on port ${port}`);
     });
+    if (!mongoUri) {
+        console.warn('MONGO_URI is not defined. Server started without MongoDB connection.');
+        return;
+    }
+    try {
+        yield (0, mongo_db_1.rundb)(mongoUri);
+    }
+    catch (error) {
+        console.error('MongoDB connection failed. Server is running without database access.', error);
+    }
 });
 start();

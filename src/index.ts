@@ -12,13 +12,20 @@ const start = async () => {
     const port = process.env.PORT || 3000;
     const mongoUri = process.env.MONGO_URI;
 
-    if(!mongoUri) throw new Error('MONGO_URI is not defined')
-
-    await rundb(mongoUri);
-
     await app.listen(port, () => {
         console.log(`Example app listening on port ${port}`);
     });
+
+    if (!mongoUri) {
+        console.warn('MONGO_URI is not defined. Server started without MongoDB connection.');
+        return;
+    }
+
+    try {
+        await rundb(mongoUri);
+    } catch (error) {
+        console.error('MongoDB connection failed. Server is running without database access.', error);
+    }
 };
 
 start()

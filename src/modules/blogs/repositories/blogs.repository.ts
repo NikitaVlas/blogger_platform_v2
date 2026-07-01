@@ -17,7 +17,9 @@ export const blogsRepository = {
         const blogToInsert: BlogInsertModel = {
             name: newBlogData.name,
             description: newBlogData.description,
-            websiteUrl: newBlogData.websiteUrl
+            websiteUrl: newBlogData.websiteUrl,
+            createdAt: newBlogData.createdAt,
+            isMembership: newBlogData.isMembership,
         }
 
         const result = await blogCollection.insertOne(blogToInsert)
