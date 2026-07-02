@@ -2,7 +2,7 @@ import {BlogViewModel} from "../models/blog.view-model";
 import {blogCollection} from "../../../db/mongo.db";
 import {blogMapper} from "../mappers/blog.mapper";
 import {BlogInputModel} from "../models/blog.input-model";
-import {BlogDbModel, BlogInsertModel} from "../models/blog.db-model";
+import {BlogInsertModel} from "../models/blog.db-model";
 import {ObjectId} from "mongodb";
 
 
@@ -49,6 +49,7 @@ export const blogsRepository = {
                 }
             }
         );
+
         return updateResult.modifiedCount > 0;
     },
 

@@ -8,7 +8,7 @@ const POST_COLLECTION_NAME = 'post';
 export let client: MongoClient;
 export let db: Db;
 export let blogCollection: Collection<OptionalId<BlogDbModel>>;
-export let postCollection: Collection<PostDbModel>;
+export let postCollection: Collection<OptionalId<PostDbModel>>;
 
 let isConnected = false;
 
@@ -23,7 +23,7 @@ export async function rundb(url: string) {
     db = client.db("blogers-platform_v2");
 
     blogCollection = client.db().collection<OptionalId<BlogDbModel>>(BLOG_COLLECTION_NAME);
-    postCollection = client.db().collection<PostDbModel>(POST_COLLECTION_NAME);
+    postCollection = client.db().collection<OptionalId<PostDbModel>>(POST_COLLECTION_NAME);
 
     isConnected = true;
 

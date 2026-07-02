@@ -11,5 +11,44 @@ export const postController = {
         const posts = await postService.findAll();
 
         res.status(HttpStatus.OK).send(posts)
+    },
+
+    async createPost(req: Request, res: Response) {
+        const createdPost = await postService.create(req.body);
+
+        res.status(HttpStatus.Created).send(createdPost)
+    },
+
+    async getPostById(req: Request<PostIdParams>, res: Response) {
+        const post = await postService.findById(req.params.id);
+
+        if(!post) {
+            res.status(HttpStatus.NotFound)
+            return
+        }
+
+        res.status(HttpStatus.OK).send(post)
+    },
+
+    async updatePost(req: Request<PostIdParams>, res: Response) {
+        const isUpdated = await postService.update(req.params.id, req.body);
+
+        if(!isUpdated) {
+            res.status(HttpStatus.NotFound)
+            return
+        }
+
+        res.sendStatus(HttpStatus.NoContent)
+    },
+
+    async deletePost(req: Request<PostIdParams>, res: Response) {
+        const isDeleted = await postService.delete(req.params.id);
+
+        if(!isDeleted) {
+            res.status(HttpStatus.NotFound)
+            return
+        }
+
+        res.sendStatus(HttpStatus.NoContent)
     }
 }
