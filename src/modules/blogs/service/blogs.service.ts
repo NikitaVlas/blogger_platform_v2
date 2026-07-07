@@ -1,11 +1,12 @@
 import {BlogViewModel} from "../models/blog.view-model";
 import {blogsRepository} from "../repositories/blogs.repository";
 import {BlogInputModel} from "../models/blog.input-model";
-
+import {BlogPaginationViewModel} from "../models/blog.pagination-view-model";
+import {BlogQueryInputModel} from "../models/blog-query-input.model";
 
 export const blogsService = {
-    async findAll(): Promise<BlogViewModel[]> {
-        return blogsRepository.findAll()
+    async findAll(query: BlogQueryInputModel): Promise<BlogPaginationViewModel> {
+        return blogsRepository.findAll(query)
     },
 
     async create(newBlogData: BlogInputModel): Promise<BlogViewModel> {

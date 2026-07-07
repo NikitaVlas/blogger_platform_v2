@@ -1,6 +1,7 @@
 import {blogsService} from "../service/blogs.service";
 import {HttpStatus} from "../../../core/types/http-statuses";
 import { Request, Response } from "express";
+import {getBlogsQueryParams} from "../helpers/get-blogs-query-params";
 
 type BlogIdParams = {
     id: string;
@@ -8,7 +9,8 @@ type BlogIdParams = {
 
 export const blogController = {
     async getBlogs(req: Request, res: Response) {
-        const blogs = await blogsService.findAll();
+        const query = getBlogsQueryParams(req);
+        const blogs = await blogsService.findAll(query);
 
         res.status(HttpStatus.OK).send(blogs)
     },

@@ -1,7 +1,7 @@
 import {BlogViewModel} from "./blog.view-model";
 
 export interface BlogPaginationViewModel {
-    pageCount: number;
+    pagesCount: number;
     page: number;
     pageSize: number;
     totalCount: number;

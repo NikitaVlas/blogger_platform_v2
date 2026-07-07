@@ -4,13 +4,37 @@ import {blogMapper} from "../mappers/blog.mapper";
 import {BlogInputModel} from "../models/blog.input-model";
 import {BlogInsertModel} from "../models/blog.db-model";
 import {ObjectId} from "mongodb";
+import {BlogPaginationViewModel} from "../models/blog.pagination-view-model";
+import {BlogQueryInputModel} from "../models/blog-query-input.model";
 
 
 export const blogsRepository = {
-    async findAll(): Promise<BlogViewModel[]> {
-        const blogs = await blogCollection.find().toArray()
+    async findAll(query: BlogQueryInputModel): Promise<BlogPaginationViewModel> {
+        const {searchNameTerm, sortBy, sortDirection, pageNumber, pageSize} = query;
+        const filter = searchNameTerm
+            ? {name: {$regex: searchNameTerm, $options: 'i'}}
+            : {};
+        const sortDirectionValue: 1 | -1 = sortDirection === 'asc' ? 1 : -1;
+        const sort: Record<string, 1 | -1> = {
+            [sortBy]: sortDirectionValue
+        };
+        const skip = (pageNumber - 1) * pageSize;
 
-        return blogs.map(blogMapper)
+        const totalCount = await blogCollection.countDocuments(filter);
+        const blogs = await blogCollection
+            .find(filter)
+            .sort(sort)
+            .skip(skip)
+            .limit(pageSize)
+            .toArray();
+
+        return {
+            pagesCount: Math.ceil(totalCount / pageSize),
+            page: pageNumber,
+            pageSize,
+            totalCount,
+            items: blogs.map(blogMapper)
+        }
     },
 
     async create(newBlogData: BlogInputModel): Promise<BlogViewModel> {
