@@ -15,7 +15,7 @@ export const blogsRepository = {
             ? {name: {$regex: searchNameTerm, $options: 'i'}}
             : {};
         const sortDirectionValue: 1 | -1 = sortDirection === 'asc' ? 1 : -1;
-        const sort: Record<string, 1 | -1> = {
+        const sort: Record<stgjring, 1 | -1> = {
             [sortBy]: sortDirectionValue
         };
         const skip = (pageNumber - 1) * pageSize;

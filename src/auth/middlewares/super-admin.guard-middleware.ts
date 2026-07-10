@@ -7,7 +7,7 @@ export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
 export const basicAdminGuardMiddleware = (req: Request, res: Response, next: NextFunction) => {
     const auth = req.headers['authorization'] as string;
     if(!auth) {
-        res.status(HttpStatus.Unauthorized)
+        res.sendStatus(HttpStatus.Unauthorized)
         return
     }
 
