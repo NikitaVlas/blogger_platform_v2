@@ -1,12 +1,22 @@
 import { query } from "express-validator";
 
 const sortDirections = ["asc", "desc"] as const;
+const postSortFields = [
+    "createdAt",
+    "title",
+    "shortDescription",
+    "content",
+    "blogName",
+] as const;
 
 export const postQueryValidation = [
     query("sortBy")
         .optional()
         .isString()
-        .withMessage("sortBy must be a string"),
+        .withMessage("sortBy must be a string")
+        .isIn(postSortFields)
+        .withMessage(`sortBy must be one of: ${postSortFields.join(", ")}`)
+        .default("createdAt"),
 
     query("sortDirection")
         .optional()

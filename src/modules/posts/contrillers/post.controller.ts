@@ -18,6 +18,17 @@ export const postController = {
     async createPost(req: Request, res: Response) {
         const createdPost = await postService.create(req.body);
 
+        if (!createdPost) {
+            return res.status(HttpStatus.BadRequest).send({
+                errorsMessages: [
+                    {
+                        field: "blogId",
+                        message: "blogId must reference an existing blog",
+                    },
+                ],
+            });
+        }
+
         res.status(HttpStatus.Created).send(createdPost)
     },
 

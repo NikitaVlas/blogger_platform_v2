@@ -1,7 +1,7 @@
 import {CommentViewModel} from "./comment.view-model";
 
 export interface CommentPaginationViewModel {
-    pageCount: number;
+    pagesCount: number;
     page: number;
     pageSize: number;
     totalCount: number;

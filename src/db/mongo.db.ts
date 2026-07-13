@@ -30,10 +30,10 @@ export async function rundb(url: string) {
 
     db = client.db("blogers-platform_v2");
 
-    blogCollection = client.db().collection<OptionalId<BlogDbModel>>(BLOG_COLLECTION_NAME);
-    postCollection = client.db().collection<OptionalId<PostDbModel>>(POST_COLLECTION_NAME);
-    userCollection = client.db().collection<OptionalId<UserDbModel>>(USER_COLLECTION_NAME);
-    commentCollection = client.db().collection<OptionalId<CommentDbModel>>(COMMENT_COLLECTION_NAME);
+    blogCollection = db.collection<OptionalId<BlogDbModel>>(BLOG_COLLECTION_NAME);
+    postCollection = db.collection<OptionalId<PostDbModel>>(POST_COLLECTION_NAME);
+    userCollection = db.collection<OptionalId<UserDbModel>>(USER_COLLECTION_NAME);
+    commentCollection = db.collection<OptionalId<CommentDbModel>>(COMMENT_COLLECTION_NAME);
 
     await userCollection.createIndex({login: 1}, {unique: true});
     await userCollection.createIndex({email: 1}, {unique: true});

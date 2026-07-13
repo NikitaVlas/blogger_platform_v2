@@ -9,7 +9,7 @@ export const postService = {
         return postRepository.findAll(query);
     },
 
-    async create(newPostData: PostViewModel): Promise<PostViewModel> {
+    async create(newPostData: PostInputModel): Promise<PostViewModel | null> {
         return postRepository.create(newPostData)
     },
 
@@ -23,5 +23,9 @@ export const postService = {
 
     async delete(id: string): Promise<boolean> {
         return postRepository.delete(id);
-    }
+    },
+
+    async findByBlogId(blogId: string, query: PostQueryInputModel): Promise<PostPaginationViewModel> {
+        return postRepository.findByBlogId(blogId, query);
+    },
 }

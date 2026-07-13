@@ -13,9 +13,9 @@ export const jwtService = {
         }
 
         return jwt.sign(
-            { userId } satisfies AccessTokenPayload,
+            {userId} satisfies AccessTokenPayload,
             secret,
-            { expiresIn: "1h" },
+            {expiresIn: "1h"},
         );
     },
 
@@ -23,13 +23,26 @@ export const jwtService = {
         const secret = process.env.JWT_SECRET;
 
         if (!secret) {
-            throw new Error("JWT_SECRET is not configured");
+            throw new Error(
+                "JWT_SECRET is not configured",
+            );
         }
 
         try {
-            return jwt.verify(token, secret) as AccessTokenPayload;
+            const payload = jwt.verify(token, secret);
+
+            if (
+                typeof payload === "string" ||
+                typeof payload.userId !== "string"
+            ) {
+                return null;
+            }
+
+            return {
+                userId: payload.userId,
+            };
         } catch {
             return null;
         }
-    },
+    }
 };

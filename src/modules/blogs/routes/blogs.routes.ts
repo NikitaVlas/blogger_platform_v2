@@ -5,6 +5,7 @@ import {inputResultValidation} from "../../../core/middlewares/validation/input-
 import {blogInputValidation} from "../vaidation/blogInput.validation";
 import {blogQueryValidation} from "../vaidation/blogQuery.validation";
 import {postQueryValidation} from "../../posts/validation/postQuery.validation";
+import {blogPostInputValidation} from "../../posts/validation/postInput.validation";
 
 export const blogsRoutes = Router();
 
@@ -21,20 +22,6 @@ blogsRoutes.post('/',
     blogController.postBlog
 )
 
-blogsRoutes.get('/:id', blogController.getBlogById)
-
-blogsRoutes.put('/:id',
-    basicAdminGuardMiddleware,
-    ...blogInputValidation,
-    inputResultValidation,
-    blogController.updateBlog
-)
-
-blogsRoutes.delete('/:id',
-    basicAdminGuardMiddleware,
-    blogController.deleteBlog
-)
-
 blogsRoutes.get(
     "/:blogId/posts",
     ...postQueryValidation,
@@ -49,3 +36,19 @@ blogsRoutes.post(
     inputResultValidation,
     blogController.createPostForBlog,
 );
+
+blogsRoutes.get('/:id',
+    blogController.getBlogById
+)
+
+blogsRoutes.put('/:id',
+    basicAdminGuardMiddleware,
+    ...blogInputValidation,
+    inputResultValidation,
+    blogController.updateBlog
+)
+
+blogsRoutes.delete('/:id',
+    basicAdminGuardMiddleware,
+    blogController.deleteBlog
+)
