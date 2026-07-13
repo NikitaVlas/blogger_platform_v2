@@ -18,46 +18,43 @@ export const blogController = {
         const query = getBlogsQueryParams(req);
         const blogs = await blogsService.findAll(query);
 
-        res.status(HttpStatus.OK).send(blogs)
+        return res.status(HttpStatus.OK).send(blogs)
     },
 
     async postBlog(req: Request, res: Response) {
         const blog = await blogsService.create(req.body);
 
-        res.status(HttpStatus.Created).send(blog)
+        return res.status(HttpStatus.Created).send(blog)
     },
 
     async getBlogById(req: Request<BlogIdParams>, res: Response) {
         const blog = await blogsService.findById(req.params.id);
 
         if(!blog) {
-            res.sendStatus(HttpStatus.NotFound)
-            return
+            return res.sendStatus(HttpStatus.NotFound)
         }
 
-        res.status(HttpStatus.OK).send(blog)
+        return res.status(HttpStatus.OK).send(blog)
     },
 
     async updateBlog(req: Request<BlogIdParams>, res: Response) {
         const isUpdated = await blogsService.update(req.params.id, req.body);
 
         if(!isUpdated) {
-            res.sendStatus(HttpStatus.NotFound)
-            return
+            return res.sendStatus(HttpStatus.NotFound)
         }
 
-        res.status(HttpStatus.NoContent)
+        return res.sendStatus(HttpStatus.NoContent)
     },
 
     async deleteBlog(req: Request<BlogIdParams>, res: Response) {
         const isDeleted = await blogsService.delete(req.params.id);
 
         if(!isDeleted) {
-            res.sendStatus(HttpStatus.NotFound)
-            return
+            return res.sendStatus(HttpStatus.NotFound)
         }
 
-        res.status(HttpStatus.NoContent)
+        return res.sendStatus(HttpStatus.NoContent)
     },
 
     async getPostsForBlog(req: Request<BlogPostsParams>, res: Response) {

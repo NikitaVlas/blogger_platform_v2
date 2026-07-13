@@ -18,8 +18,8 @@ export const pageNumberQueryValidation = query('pageNumber')
 
 export const pageSizeQueryValidation = query('pageSize')
     .optional()
-    .isInt({min: 1, max: 10})
-    .withMessage('pageSize must be between 1 and 10')
+    .isInt({min: 1})
+    .withMessage('pageSize must be a positive integer')
     .toInt()
     .default(DEFAULT_PAGE_SIZE);
 

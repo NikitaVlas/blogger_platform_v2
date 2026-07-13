@@ -38,5 +38,5 @@ export const basicAdminGuardMiddleware = (
         return res.sendStatus(HttpStatus.Unauthorized);
     }
 
-    next();
+    return next();
 };

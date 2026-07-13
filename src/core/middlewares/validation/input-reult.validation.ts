@@ -7,8 +7,7 @@ export const inputResultValidation = (req: Request, res: Response, next: NextFun
     const errors = validationResult(req);
 
     if (errors.isEmpty()) {
-        next();
-        return;
+        return next();
     }
 
     const errorsMessages: FieldError[] = errors
@@ -20,5 +19,5 @@ export const inputResultValidation = (req: Request, res: Response, next: NextFun
             }
         });
 
-    res.status(HttpStatus.BadRequest).json({errorsMessages});
+    return res.status(HttpStatus.BadRequest).json({errorsMessages});
 };
