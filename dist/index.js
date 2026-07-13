@@ -8,25 +8,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const dotenv_1 = __importDefault(require("dotenv"));
-const setup_app_1 = require("./setup-app");
-const mongo_db_1 = require("./db/mongo.db");
-dotenv_1.default.config();
+const app_1 = require("./app");
 const start = () => __awaiter(void 0, void 0, void 0, function* () {
-    const mongoUri = process.env.MONGO_URI;
-    if (!mongoUri) {
-        throw new Error("MONGO_URI is not defined");
-    }
-    yield (0, mongo_db_1.rundb)(mongoUri);
-    const app = (0, express_1.default)();
-    (0, setup_app_1.setupApp)(app);
+    yield (0, app_1.ensureDatabaseConnection)();
     const port = Number(process.env.PORT) || 3000;
-    app.listen(port, () => {
+    app_1.app.listen(port, () => {
         console.log(`Application listening on port ${port}`);
     });
 });
