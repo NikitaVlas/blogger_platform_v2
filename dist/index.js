@@ -18,22 +18,19 @@ const setup_app_1 = require("./setup-app");
 const mongo_db_1 = require("./db/mongo.db");
 dotenv_1.default.config();
 const start = () => __awaiter(void 0, void 0, void 0, function* () {
+    const mongoUri = process.env.MONGO_URI;
+    if (!mongoUri) {
+        throw new Error("MONGO_URI is not defined");
+    }
+    yield (0, mongo_db_1.rundb)(mongoUri);
     const app = (0, express_1.default)();
     (0, setup_app_1.setupApp)(app);
-    const port = process.env.PORT || 3000;
-    const mongoUri = process.env.MONGO_URI;
-    yield app.listen(port, () => {
-        console.log(`Example app listening on port ${port}`);
+    const port = Number(process.env.PORT) || 3000;
+    app.listen(port, () => {
+        console.log(`Application listening on port ${port}`);
     });
-    if (!mongoUri) {
-        console.warn('MONGO_URI is not defined. Server started without MongoDB connection.');
-        return;
-    }
-    try {
-        yield (0, mongo_db_1.rundb)(mongoUri);
-    }
-    catch (error) {
-        console.error('MongoDB connection failed. Server is running without database access.', error);
-    }
 });
-start();
+start().catch((error) => {
+    console.error("Application startup failed", error);
+    process.exit(1);
+});

@@ -2,6 +2,8 @@
   "name": "blogger_platform_v2",
   "packageManager": "yarn@4.6.0",
   "scripts": {
+    "build": "tsc",
+    "start": "tsc && node dist/index.js",
     "codebase:index": "codebase-memory-mcp cli index_repository --repo-path . --persistence false",
     "codebase:status": "codebase-memory-mcp cli list_projects",
     "watch": "tsc -w",
