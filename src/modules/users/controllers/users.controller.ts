@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import {Request, Response} from "express";
 import {HttpStatus} from "../../../core/types/http-statuses";
 import {usersService} from "../service/users.service";
 import {getUsersQueryParams} from "../helpers/get-users-query-params";
@@ -17,15 +17,37 @@ export const usersController = {
     },
 
     async postUser(req: Request, res: Response) {
-      const user = await usersService.create(req.body);
+        const result = await usersService.create(req.body);
 
-      res.status(HttpStatus.Created).send(user)
+        if (result.status === "login-not-unique") {
+            return res.status(HttpStatus.BadRequest).send({
+                errorsMessages: [
+                    {
+                        field: "login",
+                        message: "Login must be unique"
+                    }
+                ]
+            })
+        }
+
+        if (result.status === "email-not-unique") {
+            return res.status(HttpStatus.BadRequest).send({
+                errorsMessages: [
+                    {
+                        field: "email",
+                        message: "email must be unique"
+                    }
+                ]
+            })
+        }
+
+        return res.status(HttpStatus.Created).send(result.user)
     },
 
-    async deleteUser (req: Request<UserIdParams>, res: Response) {
+    async deleteUser(req: Request<UserIdParams>, res: Response) {
         const isDeleted = await usersService.delete(req.params.id);
 
-        if(!isDeleted) {
+        if (!isDeleted) {
             res.sendStatus(HttpStatus.NotFound)
             return
         }

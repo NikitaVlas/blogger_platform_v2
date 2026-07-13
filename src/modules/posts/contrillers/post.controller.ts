@@ -1,6 +1,7 @@
 import {HttpStatus} from "../../../core/types/http-statuses";
 import {postService} from "../service/post.service";
 import { Request, Response } from "express";
+import {getPostsQueryParams} from "../helpers/get-posts-query-params";
 
 type PostIdParams = {
     id: string;
@@ -8,9 +9,10 @@ type PostIdParams = {
 
 export const postController = {
     async getAllPosts(req: Request, res: Response) {
-        const posts = await postService.findAll();
+        const query = getPostsQueryParams(req);
+        const posts = await postService.findAll(query);
 
-        res.status(HttpStatus.OK).send(posts)
+        return res.status(HttpStatus.OK).send(posts);
     },
 
     async createPost(req: Request, res: Response) {
@@ -23,7 +25,7 @@ export const postController = {
         const post = await postService.findById(req.params.id);
 
         if(!post) {
-            res.status(HttpStatus.NotFound)
+            res.sendStatus(HttpStatus.NotFound)
             return
         }
 
@@ -34,7 +36,7 @@ export const postController = {
         const isUpdated = await postService.update(req.params.id, req.body);
 
         if(!isUpdated) {
-            res.status(HttpStatus.NotFound)
+            res.sendStatus(HttpStatus.NotFound)
             return
         }
 
@@ -45,7 +47,7 @@ export const postController = {
         const isDeleted = await postService.delete(req.params.id);
 
         if(!isDeleted) {
-            res.status(HttpStatus.NotFound)
+            res.sendStatus(HttpStatus.NotFound)
             return
         }
 

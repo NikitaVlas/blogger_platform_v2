@@ -1,10 +1,10 @@
 import {UserQueryInputModel} from "../models/user-query-input.model";
 import {UserPaginationViewModel} from "../models/user.pagination-view-model";
 import {userCollection} from "../../../db/mongo.db";
-import {ObjectId} from "mongodb";
 import {UserViewModel} from "../models/user.view-model";
-import {UserInsertModel} from "../models/user.db-model";
+import {UserDbModel, UserInsertModel} from "../models/user.db-model";
 import {userMapper} from "../mappers/user.mapper";
+import {toObjectId} from "../../../core/helpers/toObject";
 
 export const usersRepository = {
     async findAll(query: UserQueryInputModel): Promise<UserPaginationViewModel> {
@@ -63,8 +63,44 @@ export const usersRepository = {
     },
 
     async delete(id: string): Promise<boolean> {
-        const deleteResult = await userCollection.deleteOne({_id: new ObjectId(id)});
+        const objectId = toObjectId(id);
+
+        if (!objectId) {
+            return false;
+        }
+
+        const deleteResult = await userCollection.deleteOne({_id: objectId});
 
         return deleteResult.deletedCount > 0;
-    }
+    },
+
+
+    async findByLoginOrEmail(loginOrEmail: string): Promise<UserDbModel  | null> {
+        return userCollection.findOne({
+            $or: [
+                {login: loginOrEmail},
+                {email: loginOrEmail}
+            ]
+        })
+    },
+
+    async findByLogin(login: string): Promise<UserDbModel | null> {
+        return userCollection.findOne({login})
+    },
+
+    async findByEmail(email: string): Promise<UserDbModel | null> {
+        return userCollection.findOne({email})
+    },
+
+    async findById(id: string): Promise<UserDbModel | null> {
+        const objectId = toObjectId(id);
+
+        if (!objectId) {
+            return null;
+        }
+
+        return userCollection.findOne({
+            _id: objectId,
+        });
+    },
 };

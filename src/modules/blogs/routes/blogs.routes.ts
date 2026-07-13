@@ -4,6 +4,7 @@ import {basicAdminGuardMiddleware} from "../../../auth/middlewares/super-admin.g
 import {inputResultValidation} from "../../../core/middlewares/validation/input-reult.validation";
 import {blogInputValidation} from "../vaidation/blogInput.validation";
 import {blogQueryValidation} from "../vaidation/blogQuery.validation";
+import {postQueryValidation} from "../../posts/validation/postQuery.validation";
 
 export const blogsRoutes = Router();
 
@@ -33,3 +34,18 @@ blogsRoutes.delete('/:id',
     basicAdminGuardMiddleware,
     blogController.deleteBlog
 )
+
+blogsRoutes.get(
+    "/:blogId/posts",
+    ...postQueryValidation,
+    inputResultValidation,
+    blogController.getPostsForBlog,
+);
+
+blogsRoutes.post(
+    "/:blogId/posts",
+    basicAdminGuardMiddleware,
+    ...blogPostInputValidation,
+    inputResultValidation,
+    blogController.createPostForBlog,
+);

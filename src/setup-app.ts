@@ -3,6 +3,7 @@ import {RouterPath} from "./core/Paths/Paths";
 import {blogsRoutes} from "./modules/blogs/routes/blogs.routes";
 import {postsRoutes} from "./modules/posts/routes/posts.routes";
 import {usersRoutes} from "./modules/users/routes/users.routes";
+import {authRoutes} from "./modules/auth/routes/auth.routes";
 
 
 export const setupApp = (app: Express) => {
@@ -16,6 +17,7 @@ export const setupApp = (app: Express) => {
     app.use(RouterPath.blogs, blogsRoutes);
     app.use(RouterPath.posts, postsRoutes);
     app.use(RouterPath.users, usersRoutes);
+    app.use(RouterPath.auth, authRoutes);
 
     return app;
 };

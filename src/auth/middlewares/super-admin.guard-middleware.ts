@@ -1,28 +1,42 @@
-import { NextFunction, Request, Response } from 'express';
-import { HttpStatus } from '../../core/types/http-statuses';
+import { NextFunction, Request, Response } from "express";
+import { HttpStatus } from "../../core/types/http-statuses";
 
-export const ADMIN_USERNAME = process.env.ADMIN_USERNAME
-export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
+export const basicAdminGuardMiddleware = (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+) => {
+    const authorization = req.headers.authorization;
 
-export const basicAdminGuardMiddleware = (req: Request, res: Response, next: NextFunction) => {
-    const auth = req.headers['authorization'] as string;
-    if(!auth) {
-        res.sendStatus(HttpStatus.Unauthorized)
-        return
+    if (!authorization) {
+        return res.sendStatus(HttpStatus.Unauthorized);
     }
 
-    const [authType, token] = auth.split(' ');
-    if (authType !== 'Basic') {
-        res.status(HttpStatus.Unauthorized)
-        return
+    const [scheme, token] = authorization.split(" ");
+
+    if (scheme !== "Basic" || !token) {
+        return res.sendStatus(HttpStatus.Unauthorized);
     }
 
-    const credentials = Buffer.from(token, 'base64').toString('utf-8');
-    const [username, password] = credentials.split(':');
-    if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
-        res.status(HttpStatus.Unauthorized)
-        return
+    const credentials = Buffer
+        .from(token, "base64")
+        .toString("utf-8");
+
+    const separatorIndex = credentials.indexOf(":");
+
+    if (separatorIndex === -1) {
+        return res.sendStatus(HttpStatus.Unauthorized);
+    }
+
+    const username = credentials.slice(0, separatorIndex);
+    const password = credentials.slice(separatorIndex + 1);
+
+    if (
+        username !== process.env.ADMIN_USERNAME ||
+        password !== process.env.ADMIN_PASSWORD
+    ) {
+        return res.sendStatus(HttpStatus.Unauthorized);
     }
 
     next();
-}
+};

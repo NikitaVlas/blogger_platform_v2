@@ -2,9 +2,15 @@ import {blogsService} from "../service/blogs.service";
 import {HttpStatus} from "../../../core/types/http-statuses";
 import { Request, Response } from "express";
 import {getBlogsQueryParams} from "../helpers/get-blogs-query-params";
+import {getPostsQueryParams} from "../../posts/helpers/get-posts-query-params";
+import {postService} from "../../posts/service/post.service";
 
 type BlogIdParams = {
     id: string;
+};
+
+type BlogPostsParams = {
+    blogId: string;
 };
 
 export const blogController = {
@@ -25,7 +31,7 @@ export const blogController = {
         const blog = await blogsService.findById(req.params.id);
 
         if(!blog) {
-            res.status(HttpStatus.NotFound)
+            res.sendStatus(HttpStatus.NotFound)
             return
         }
 
@@ -36,7 +42,7 @@ export const blogController = {
         const isUpdated = await blogsService.update(req.params.id, req.body);
 
         if(!isUpdated) {
-            res.status(HttpStatus.NotFound)
+            res.sendStatus(HttpStatus.NotFound)
             return
         }
 
@@ -47,10 +53,49 @@ export const blogController = {
         const isDeleted = await blogsService.delete(req.params.id);
 
         if(!isDeleted) {
-            res.status(HttpStatus.NotFound)
+            res.sendStatus(HttpStatus.NotFound)
             return
         }
 
         res.status(HttpStatus.NoContent)
-    }
+    },
+
+    async getPostsForBlog(req: Request<BlogPostsParams>, res: Response) {
+        const blog = await blogsService.findById(
+            req.params.blogId,
+        );
+
+        if (!blog) {
+            return res.sendStatus(HttpStatus.NotFound);
+        }
+
+        const query = getPostsQueryParams(req);
+
+        const posts = await postService.findByBlogId(
+            req.params.blogId,
+            query,
+        );
+
+        return res.status(HttpStatus.OK).send(posts);
+    },
+
+    async createPostForBlog(
+        req: Request<BlogPostsParams>,
+        res: Response,
+    ) {
+        const blog = await blogsService.findById(
+            req.params.blogId,
+        );
+
+        if (!blog) {
+            return res.sendStatus(HttpStatus.NotFound);
+        }
+
+        const post = await postService.create({
+            ...req.body,
+            blogId: req.params.blogId,
+        });
+
+        return res.status(HttpStatus.Created).send(post);
+    },
 }

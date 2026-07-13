@@ -1,7 +1,7 @@
 import {PostViewModel} from "./post.view-model";
 
 export interface PostPaginationViewModel {
-    pageCount: number;
+    pagesCount: number;
     page: number;
     pageSize: number;
     totalCount: number;

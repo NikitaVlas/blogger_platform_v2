@@ -39,9 +39,23 @@ export const sortDirectionQueryValidation = query('sortDirection')
     .withMessage(`sortDirection must be one of: ${sortDirections.join(', ')}`)
     .default(DEFAULT_SORT_DIRECTION);
 
+export const searchLoginTermValidation = query("searchLoginTerm")
+    .optional({ values: "falsy" })
+    .isString()
+    .withMessage("searchLoginTerm must be a string")
+    .trim();
+
+export const searchEmailTermValidation = query("searchEmailTerm")
+    .optional({ values: "falsy" })
+    .isString()
+    .withMessage("searchEmailTerm must be a string")
+    .trim();
+
 export const userQueryValidation = [
     sortDirectionQueryValidation,
     pageNumberQueryValidation,
     pageSizeQueryValidation,
-    sortByQueryValidation
+    sortByQueryValidation,
+    searchLoginTermValidation,
+    searchEmailTermValidation
 ];
