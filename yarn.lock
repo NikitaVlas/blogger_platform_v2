@@ -1792,6 +1792,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": "npm:^8.60.1"
     "@typescript-eslint/parser": "npm:^8.60.1"
     bcrypt: "npm:^6.0.0"
+    codebase-memory-mcp: "npm:^0.9.0"
     dotenv: "npm:^17.4.2"
     eslint: "npm:^10.4.1"
     eslint-config-prettier: "npm:^10.1.8"
@@ -2037,6 +2038,16 @@ __metadata:
   version: 4.6.0
   resolution: "co@npm:4.6.0"
   checksum: 10c0/c0e85ea0ca8bf0a50cbdca82efc5af0301240ca88ebe3644a6ffb8ffe911f34d40f8fbcf8f1d52c5ddd66706abd4d3bfcd64259f1e8e2371d4f47573b0dc8c28
+  languageName: node
+  linkType: hard
+
+"codebase-memory-mcp@npm:^0.9.0":
+  version: 0.9.0
+  resolution: "codebase-memory-mcp@npm:0.9.0"
+  bin:
+    codebase-memory-mcp: bin.js
+  checksum: 10c0/c6c4e4667acf08ebd181574aa7051fad32c9ae24fc23a4c9fd7619d0ab6f2f791ea0618c808439f3c63abfc27d8c4bc348206fd13d30f5e14f15ce8b811c6edf
+  conditions: (os=linux | os=darwin | os=win32) & (cpu=x64 | cpu=arm64)
   languageName: node
   linkType: hard
 

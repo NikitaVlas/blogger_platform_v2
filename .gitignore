@@ -28,5 +28,9 @@ node_modules
 .idea
 .vscode
 
+# Local codebase-memory-mcp graph (regenerated with `yarn codebase:index`)
+.codebase-memory/
+.codex
+
 # OS
 .DS_Store

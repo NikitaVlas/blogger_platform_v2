@@ -2,6 +2,8 @@
   "name": "blogger_platform_v2",
   "packageManager": "yarn@4.6.0",
   "scripts": {
+    "codebase:index": "codebase-memory-mcp cli index_repository --repo-path . --persistence false",
+    "codebase:status": "codebase-memory-mcp cli list_projects",
     "watch": "tsc -w",
     "dev": "nodemon --inspect --watch dist dist/index.js",
     "jest": "jest -i",
@@ -24,6 +26,7 @@
     "@types/supertest": "^7.2.0",
     "@typescript-eslint/eslint-plugin": "^8.60.1",
     "@typescript-eslint/parser": "^8.60.1",
+    "codebase-memory-mcp": "^0.9.0",
     "eslint": "^10.4.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.6",
