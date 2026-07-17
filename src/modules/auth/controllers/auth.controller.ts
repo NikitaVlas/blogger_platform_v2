@@ -9,7 +9,7 @@ import {registrationService} from "../service/registration.service";
 import {UserInputModel} from "../../users/models/user.input-model";
 import {RegistrationConfirmationCodeModel} from "../models/registration-confirmation-code-model";
 import {RegistrationEmailResending} from "../models/registration-email-resending";
-import {ApiErrorResult} from "../../../core/types/api-error-result";
+import {APIErrorResult } from "../../../core/types/api-error-result";
 
 export const authController = {
     async login(req: Request, res: Response<LoginSuccessViewModel>) {
@@ -47,7 +47,7 @@ export const authController = {
             {},
             UserInputModel
         >,
-        res: Response<ApiErrorResult>,
+        res: Response<APIErrorResult >,
     ) {
         const result =
             await registrationService
@@ -108,7 +108,7 @@ export const authController = {
             RegistrationConfirmationCodeModel
         >,
         res: Response<
-            ApiErrorResult | void
+            APIErrorResult  | void
         >,
     ) {
         const result =
@@ -146,7 +146,7 @@ export const authController = {
             RegistrationEmailResending
         >,
         res: Response<
-            ApiErrorResult | void
+            APIErrorResult | void
         >,
     ) {
         const result =

@@ -10,6 +10,8 @@ export const registrationEmailResendingValidation = [
             "email must be a string",
         )
         .trim()
+        .isLength({max: 100})
+        .withMessage("email must not be longer than 100 characters")
         .matches(emailPattern)
         .withMessage(
             "email has incorrect format",

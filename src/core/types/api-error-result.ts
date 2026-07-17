@@ -3,7 +3,7 @@ export interface FieldError {
     field: string;
 }
 
-export interface ApiErrorResult {
+export interface APIErrorResult  {
     errorsMessages: FieldError[];
 }
 

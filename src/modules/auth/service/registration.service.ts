@@ -122,7 +122,12 @@ export const registrationService = {
                     input.email,
                     confirmationCode,
                 );
-        } catch {
+        } catch (error: unknown) {
+            console.error(
+                "Registration email sending failed",
+                error,
+            );
+
             return {
                 status:
                     "email-send-error",
@@ -202,7 +207,12 @@ export const registrationService = {
                     user.email,
                     confirmationCode,
                 );
-        } catch {
+        } catch (error: unknown) {
+            console.error(
+                "Registration email resending failed",
+                error,
+            );
+
             return {
                 status:
                     "email-send-error",
