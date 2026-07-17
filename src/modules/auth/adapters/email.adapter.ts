@@ -54,9 +54,9 @@ export const emailAdapter = {
             createTransporter();
 
         const confirmationUrl =
-            getRequiredEnv(
-                "FRONTEND_CONFIRMATION_URL",
-            );
+            process.env
+                .FRONTEND_CONFIRMATION_URL ??
+            "https://example.com/confirm-email";
 
         const url = new URL(
             confirmationUrl,
