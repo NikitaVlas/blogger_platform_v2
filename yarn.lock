@@ -1146,6 +1146,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/nodemailer@npm:^8.0.1":
+  version: 8.0.1
+  resolution: "@types/nodemailer@npm:8.0.1"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: 10c0/4370ac478a6811faaa64fcf769556515c72b78c66961cde22be75bb975ce8a964cfbe5e7c0988a99250f3250faa34357c73958b019b3c63dd138ea3784442032
+  languageName: node
+  linkType: hard
+
 "@types/qs@npm:*":
   version: 6.15.1
   resolution: "@types/qs@npm:6.15.1"
@@ -1806,6 +1815,7 @@ __metadata:
     "@types/jest": "npm:^30.0.0"
     "@types/jsonwebtoken": "npm:^9.0.10"
     "@types/node": "npm:^25.9.2"
+    "@types/nodemailer": "npm:^8.0.1"
     "@types/supertest": "npm:^7.2.0"
     "@typescript-eslint/eslint-plugin": "npm:^8.60.1"
     "@typescript-eslint/parser": "npm:^8.60.1"
@@ -1821,6 +1831,7 @@ __metadata:
     jsonwebtoken: "npm:^9.0.3"
     mongodb: "npm:^7.3.0"
     mongoose: "npm:^0.0.2-security"
+    nodemailer: "npm:^9.0.3"
     nodemon: "npm:^3.1.14"
     prettier: "npm:^3.8.3"
     supertest: "npm:^7.2.2"
@@ -4273,6 +4284,13 @@ __metadata:
   version: 2.0.47
   resolution: "node-releases@npm:2.0.47"
   checksum: 10c0/fb1a703adb88c3bfe73aa39ebe0a0bc6d59c9d20d74ad61fb50958ffb22840da82a7a256076840b84c8ed57bb80e6fc8e588e675712fcf7af269aab16206b9b5
+  languageName: node
+  linkType: hard
+
+"nodemailer@npm:^9.0.3":
+  version: 9.0.3
+  resolution: "nodemailer@npm:9.0.3"
+  checksum: 10c0/9e93516fb9fcc8835b683cdf3b90135648dabf0133ac9b04890303c2e23eef1d7bae58fe98afb0e251ae10428b96f05df483deb78f0b49f47793debbb0383216
   languageName: node
   linkType: hard
 

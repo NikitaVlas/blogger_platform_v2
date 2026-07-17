@@ -4,7 +4,7 @@ import {UserPaginationViewModel} from "../models/user.pagination-view-model";
 import {UserInputModel} from "../models/user.input-model";
 import {UserViewModel} from "../models/user.view-model";
 import bcrypt from "bcrypt";
-import {UserInsertModel} from "../models/user.db-model";
+import {MongoServerError} from "mongodb";
 
 type CreateUserResult =
     | { status: "success"; user: UserViewModel }
@@ -16,23 +16,97 @@ export const usersService = {
         return usersRepository.findAll(query)
     },
 
-    async create(newUserData: UserInputModel): Promise<CreateUserResult> {
-        const userWithLogin = await usersRepository.findByLogin(newUserData.login);
-        if(userWithLogin) return {status: "login-not-unique"}
+    async create(
+        newUserData: UserInputModel,
+    ): Promise<CreateUserResult> {
+        const userWithLogin =
+            await usersRepository.findByLogin(
+                newUserData.login,
+            );
 
-        const userWithEmail = await usersRepository.findByEmail(newUserData.email);
-        if(userWithEmail) return {status: "email-not-unique"}
+        if (userWithLogin) {
+            return {
+                status:
+                    "login-not-unique",
+            };
+        }
 
-        const passwordHash = await bcrypt.hash(newUserData.password, 10);
+        const userWithEmail =
+            await usersRepository.findByEmail(
+                newUserData.email,
+            );
 
-        const user = await usersRepository.create({
-            login: newUserData.login,
-            email: newUserData.email,
-            passwordHash,
-            createdAt: new Date(),
-        })
+        if (userWithEmail) {
+            return {
+                status:
+                    "email-not-unique",
+            };
+        }
 
-        return {status: "success", user}
+        const passwordHash =
+            await bcrypt.hash(
+                newUserData.password,
+                10,
+            );
+
+        let user: UserViewModel;
+
+        try {
+            user =
+                await usersRepository.create({
+                    login:
+                    newUserData.login,
+                    email:
+                    newUserData.email,
+                    passwordHash,
+                    createdAt: new Date(),
+                    emailConfirmation: {
+                        confirmationCode:
+                            null,
+                        expirationDate:
+                            null,
+                        isConfirmed: true,
+                    },
+                });
+        } catch (error: unknown) {
+            if (
+                error instanceof
+                MongoServerError &&
+                error.code === 11000
+            ) {
+                const duplicatedField =
+                    Object.keys(
+                        error.keyPattern ?? {},
+                    )[0];
+
+                if (
+                    duplicatedField ===
+                    "login"
+                ) {
+                    return {
+                        status:
+                            "login-not-unique",
+                    };
+                }
+
+                if (
+                    duplicatedField ===
+                    "email"
+                ) {
+                    return {
+                        status:
+                            "email-not-unique",
+                    };
+                }
+            }
+
+            throw error;
+        }
+
+        return {
+            status: "success",
+            user,
+        };
     },
 
     async delete(id: string): Promise<boolean> {

@@ -5,6 +5,7 @@ import {UserViewModel} from "../models/user.view-model";
 import {UserDbModel, UserInsertModel} from "../models/user.db-model";
 import {userMapper} from "../mappers/user.mapper";
 import {toObjectId} from "../../../core/helpers/toObject";
+import {ObjectId} from "mongodb";
 
 export const usersRepository = {
     async findAll(query: UserQueryInputModel): Promise<UserPaginationViewModel> {
@@ -102,5 +103,55 @@ export const usersRepository = {
         return userCollection.findOne({
             _id: objectId,
         });
+    },
+
+    async confirmEmail(
+        code: string,
+    ): Promise<boolean> {
+        const result =
+            await userCollection.updateOne(
+                {
+                    "emailConfirmation.confirmationCode":
+                    code,
+                    "emailConfirmation.isConfirmed":
+                        false,
+                    "emailConfirmation.expirationDate": {
+                        $gt: new Date(),
+                    },
+                },
+                {
+                    $set: {
+                        "emailConfirmation.isConfirmed":
+                            true,
+                        "emailConfirmation.confirmationCode":
+                            null,
+                        "emailConfirmation.expirationDate":
+                            null,
+                    },
+                },
+            );
+
+        return result.modifiedCount === 1;
+    },
+
+    async updateConfirmationCode(userId: ObjectId, confirmationCode: string, expirationDate: Date): Promise<boolean> {
+        const result =
+            await userCollection.updateOne(
+                {
+                    _id: userId,
+                    "emailConfirmation.isConfirmed":
+                        false,
+                },
+                {
+                    $set: {
+                        "emailConfirmation.confirmationCode":
+                        confirmationCode,
+                        "emailConfirmation.expirationDate":
+                        expirationDate,
+                    },
+                },
+            );
+
+        return result.modifiedCount === 1;
     },
 };
