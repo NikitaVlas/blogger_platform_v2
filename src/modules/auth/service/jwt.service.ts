@@ -1,48 +1,142 @@
 import jwt from "jsonwebtoken";
+import {randomUUID} from "node:crypto";
 
 type AccessTokenPayload = {
     userId: string;
+    tokenType: "access";
 };
+
+export type RefreshTokenPayload = {
+    userId: string;
+    tokenId: string;
+};
+
+export type CreatedRefreshToken = {
+    token: string;
+    tokenId: string;
+    issuedAt: Date;
+    expiresAt: Date;
+};
+
+const ACCESS_TOKEN_LIFETIME_SECONDS = 10;
+const REFRESH_TOKEN_LIFETIME_SECONDS = 20;
+
+function getJwtSecret(): string {
+    const secret = process.env.JWT_SECRET;
+
+    if (!secret) {
+        throw new Error(
+            "JWT_SECRET is not configured",
+        );
+    }
+
+    return secret;
+}
 
 export const jwtService = {
     createAccessToken(userId: string): string {
-        const secret = process.env.JWT_SECRET;
-
-        if (!secret) {
-            throw new Error("JWT_SECRET is not configured");
-        }
-
         return jwt.sign(
-            {userId} satisfies AccessTokenPayload,
-            secret,
-            {expiresIn: "1h"},
+            {
+                userId,
+                tokenType: "access",
+            } satisfies AccessTokenPayload,
+            getJwtSecret(),
+            {
+                expiresIn:
+                ACCESS_TOKEN_LIFETIME_SECONDS,
+            },
         );
     },
 
-    verifyAccessToken(token: string): AccessTokenPayload | null {
-        const secret = process.env.JWT_SECRET;
+    createRefreshToken(
+        userId: string,
+    ): CreatedRefreshToken {
+        const tokenId = randomUUID();
+        const issuedAt = new Date();
 
-        if (!secret) {
-            throw new Error(
-                "JWT_SECRET is not configured",
-            );
-        }
+        const expiresAt = new Date(
+            issuedAt.getTime() +
+            REFRESH_TOKEN_LIFETIME_SECONDS *
+            1000,
+        );
 
+        const token = jwt.sign(
+            {
+                userId,
+                tokenType: "refresh",
+            },
+            getJwtSecret(),
+            {
+                expiresIn:
+                REFRESH_TOKEN_LIFETIME_SECONDS,
+
+                // jwtid записывается в стандартное поле jti.
+                jwtid: tokenId,
+            },
+        );
+
+        return {
+            token,
+            tokenId,
+            issuedAt,
+            expiresAt,
+        };
+    },
+
+    verifyAccessToken(
+        token: string,
+    ): AccessTokenPayload | null {
         try {
-            const payload = jwt.verify(token, secret);
+            const payload = jwt.verify(
+                token,
+                getJwtSecret(),
+            );
 
             if (
                 typeof payload === "string" ||
-                typeof payload.userId !== "string"
+                typeof payload.userId !== "string" ||
+                payload.tokenType !== "access"
             ) {
                 return null;
             }
 
             return {
                 userId: payload.userId,
+                tokenType: "access",
             };
         } catch {
             return null;
         }
-    }
+    },
+
+    verifyRefreshToken(
+        token: string,
+    ): RefreshTokenPayload | null {
+        try {
+            const payload = jwt.verify(
+                token,
+                getJwtSecret(),
+            );
+
+            if (
+                typeof payload === "string" ||
+                typeof payload.userId !== "string" ||
+                typeof payload.jti !== "string" ||
+                payload.tokenType !== "refresh"
+            ) {
+                return null;
+            }
+
+            return {
+                userId: payload.userId,
+                tokenId: payload.jti,
+            };
+        } catch {
+            // Сюда попадут токены:
+            // - с неправильной подписью;
+            // - с неправильной структурой;
+            // - с истёкшим exp.
+            return null;
+        }
+    },
 };

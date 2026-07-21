@@ -16,6 +16,16 @@ authRoutes.post(
     authController.login,
 );
 
+authRoutes.post(
+    "/refresh-token",
+    authController.refreshToken,
+);
+
+authRoutes.post(
+    "/logout",
+    authController.logout,
+);
+
 authRoutes.get(
     "/me",
     bearerAuthMiddleware,

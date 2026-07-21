@@ -6,10 +6,13 @@ import {usersRoutes} from "./modules/users/routes/users.routes";
 import {authRoutes} from "./modules/auth/routes/auth.routes";
 import {commentsRoutes} from "./modules/comments/routes/comments.routes";
 import {testingRoutes} from "./modules/testing/routes/testing.routes";
+import cookieParser from "cookie-parser";
 
 
 export const setupApp = (app: Express) => {
     app.use(express.json()); // middleware для парсинга JSON в теле запроса
+
+    app.use(cookieParser());
 
     // основной роут
     app.get("/", (req, res) => {

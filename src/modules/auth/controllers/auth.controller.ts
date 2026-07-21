@@ -1,6 +1,5 @@
 import {authService} from "../service/auth.service";
 import {HttpStatus} from "../../../core/types/http-statuses";
-import {jwtService} from "../service/jwt.service";
 import {AuthRequest} from "../types/auth-request";
 import { Request, Response } from "express";
 import {LoginSuccessViewModel} from "../models/login-success.view-model";
@@ -10,25 +9,114 @@ import {UserInputModel} from "../../users/models/user.input-model";
 import {RegistrationConfirmationCodeModel} from "../models/registration-confirmation-code-model";
 import {RegistrationEmailResending} from "../models/registration-email-resending";
 import {APIErrorResult } from "../../../core/types/api-error-result";
+import { authSessionService } from "../service/auth-session.service";
+import {
+    clearRefreshTokenCookieOptions,
+    REFRESH_TOKEN_COOKIE_NAME,
+    refreshTokenCookieOptions,
+} from "../helpers/refresh-token.cookie";
 
 export const authController = {
     async login(req: Request, res: Response<LoginSuccessViewModel>) {
-        const user = await authService.validateCredentials(
-            req.body.loginOrEmail,
-            req.body.password,
-        );
+        const user =
+            await authService.validateCredentials(
+                req.body.loginOrEmail,
+                req.body.password,
+            );
 
         if (!user) {
-            return res.sendStatus(HttpStatus.Unauthorized);
+            return res.sendStatus(
+                HttpStatus.Unauthorized,
+            );
         }
 
-        const accessToken = jwtService.createAccessToken(
-            user._id.toString(),
+        const tokens =
+            await authSessionService.createTokenPair(
+                user._id.toString(),
+            );
+
+        res.cookie(
+            REFRESH_TOKEN_COOKIE_NAME,
+            tokens.refreshToken,
+            refreshTokenCookieOptions,
         );
 
         return res.status(HttpStatus.OK).send({
-            accessToken,
+            accessToken: tokens.accessToken,
         });
+    },
+
+    async refreshToken(req: Request, res: Response<LoginSuccessViewModel>) {
+        const refreshToken =
+            req.cookies?.[
+                REFRESH_TOKEN_COOKIE_NAME
+                ];
+
+        if (
+            typeof refreshToken !== "string" ||
+            !refreshToken
+        ) {
+            return res.sendStatus(
+                HttpStatus.Unauthorized,
+            );
+        }
+
+        const tokens =
+            await authSessionService.refresh(
+                refreshToken,
+            );
+
+        if (!tokens) {
+            return res.sendStatus(
+                HttpStatus.Unauthorized,
+            );
+        }
+
+        res.cookie(
+            REFRESH_TOKEN_COOKIE_NAME,
+            tokens.refreshToken,
+            refreshTokenCookieOptions,
+        );
+
+        return res.status(HttpStatus.OK).send({
+            accessToken: tokens.accessToken,
+        });
+    },
+
+    async logout(req: Request, res: Response) {
+        const refreshToken =
+            req.cookies?.[
+                REFRESH_TOKEN_COOKIE_NAME
+                ];
+
+        if (
+            typeof refreshToken !== "string" ||
+            !refreshToken
+        ) {
+            return res.sendStatus(
+                HttpStatus.Unauthorized,
+            );
+        }
+
+        const revoked =
+            await authSessionService.logout(
+                refreshToken,
+            );
+
+        if (!revoked) {
+            return res.sendStatus(
+                HttpStatus.Unauthorized,
+            );
+        }
+
+        res.clearCookie(
+            REFRESH_TOKEN_COOKIE_NAME,
+            clearRefreshTokenCookieOptions,
+        );
+
+        return res.sendStatus(
+            HttpStatus.NoContent,
+        );
     },
 
     async me(req: Request, res: Response<MeViewModel>) {
