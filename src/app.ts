@@ -2,6 +2,7 @@ import express, { NextFunction, Request, Response } from "express";
 import dotenv from "dotenv";
 import { setupApp } from "./setup-app";
 import { rundb } from "./db/mongo.db";
+import { requestLogMiddleware } from "./core/middlewares/request-log.middleware";
 
 dotenv.config();
 
@@ -37,6 +38,8 @@ app.use(async (_req: Request, res: Response, next: NextFunction) => {
         });
     }
 });
+
+app.use(requestLogMiddleware);
 
 setupApp(app);
 

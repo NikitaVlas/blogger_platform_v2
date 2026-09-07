@@ -3,7 +3,7 @@ import {
     blogCollection,
     postCollection,
     userCollection,
-    commentCollection, refreshTokenCollection,
+    commentCollection, refreshTokenCollection, requestLogCollection,
 } from "../../../db/mongo.db";
 import { HttpStatus } from "../../../core/types/http-statuses";
 
@@ -18,6 +18,7 @@ export const testingController = {
             userCollection.deleteMany({}),
             commentCollection.deleteMany({}),
             refreshTokenCollection.deleteMany({}),
+            requestLogCollection.deleteMany({}),
         ]);
 
         return res.sendStatus(
