@@ -9,7 +9,12 @@ export type RefreshTokenDbModel = {
     // Уникальный идентификатор JWT из поля jti.
     tokenId: string;
 
+    deviceId: string;
+    deviceName: string;
+    ip: string;
+
     issuedAt: Date;
+    lastActiveDate: Date;
     expiresAt: Date;
 
     // null — токен ещё активен.

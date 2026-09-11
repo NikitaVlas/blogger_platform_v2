@@ -1,5 +1,7 @@
 import { app, ensureDatabaseConnection } from "./app";
 
+app.set("trust proxy", true);
+
 const start = async () => {
     await ensureDatabaseConnection();
 

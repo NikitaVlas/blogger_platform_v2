@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const app_1 = require("./app");
+app_1.app.set("trust proxy", true);
 const start = () => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, app_1.ensureDatabaseConnection)();
     const port = Number(process.env.PORT) || 3000;

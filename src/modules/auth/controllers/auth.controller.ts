@@ -33,6 +33,8 @@ export const authController = {
         const tokens =
             await authSessionService.createTokenPair(
                 user._id.toString(),
+                req.headers["user-agent"] || "Unknown device",
+                req.ip ?? req.socket.remoteAddress ?? "",
             );
 
         res.cookie(
@@ -127,6 +129,42 @@ export const authController = {
             login: user.login,
             userId: user._id.toString(),
         });
+    },
+
+    async getDevices(req: Request, res: Response) {
+        const devices = await authSessionService.getActiveDevices(req.cookies?.[REFRESH_TOKEN_COOKIE_NAME]);
+
+        if (!devices) {
+            return res.sendStatus(HttpStatus.Unauthorized);
+        }
+
+        return res.status(HttpStatus.OK).send(devices.map((device) => ({
+            ip: device.ip,
+            title: device.deviceName,
+            lastActiveDate: device.lastActiveDate.toISOString(),
+            deviceId: device.deviceId,
+        })));
+    },
+
+    async deleteAllOtherDevices(req: Request, res: Response) {
+        const deleted = await authSessionService.deleteAllOtherDevices(req.cookies?.[REFRESH_TOKEN_COOKIE_NAME]);
+
+        return deleted
+            ? res.sendStatus(HttpStatus.NoContent)
+            : res.sendStatus(HttpStatus.Unauthorized);
+    },
+
+    async deleteDevice(req: Request<{deviceId: string}>, res: Response) {
+        const result = await authSessionService.deleteDevice(
+            req.cookies?.[REFRESH_TOKEN_COOKIE_NAME],
+            req.params.deviceId,
+        );
+
+        if (result === "unauthorized") return res.sendStatus(HttpStatus.Unauthorized);
+        if (result === "forbidden") return res.sendStatus(HttpStatus.Forbidden);
+        if (result === "not-found") return res.sendStatus(HttpStatus.NotFound);
+
+        return res.sendStatus(HttpStatus.NoContent);
     },
 
     async registration(

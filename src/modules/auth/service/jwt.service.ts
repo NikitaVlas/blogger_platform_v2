@@ -9,6 +9,7 @@ type AccessTokenPayload = {
 export type RefreshTokenPayload = {
     userId: string;
     tokenId: string;
+    deviceId: string;
 };
 
 export type CreatedRefreshToken = {
@@ -50,6 +51,7 @@ export const jwtService = {
 
     createRefreshToken(
         userId: string,
+        deviceId: string,
     ): CreatedRefreshToken {
         const tokenId = randomUUID();
         const issuedAt = new Date();
@@ -63,6 +65,7 @@ export const jwtService = {
         const token = jwt.sign(
             {
                 userId,
+                deviceId,
                 tokenType: "refresh",
             },
             getJwtSecret(),
@@ -122,6 +125,7 @@ export const jwtService = {
                 typeof payload === "string" ||
                 typeof payload.userId !== "string" ||
                 typeof payload.jti !== "string" ||
+                typeof payload.deviceId !== "string" ||
                 payload.tokenType !== "refresh"
             ) {
                 return null;
@@ -130,6 +134,7 @@ export const jwtService = {
             return {
                 userId: payload.userId,
                 tokenId: payload.jti,
+                deviceId: payload.deviceId,
             };
         } catch {
             // Сюда попадут токены:

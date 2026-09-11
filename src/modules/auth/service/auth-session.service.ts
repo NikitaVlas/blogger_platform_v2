@@ -1,6 +1,7 @@
 import { jwtService } from "./jwt.service";
 import { refreshTokenRepository } from "../repositories/refresh-token.repository";
 import { usersRepository } from "../../users/repositories/users.repository";
+import { randomUUID } from "node:crypto";
 
 export type TokenPair = {
     accessToken: string;
@@ -13,17 +14,24 @@ export const authSessionService = {
      */
     async createTokenPair(
         userId: string,
+        deviceName: string,
+        ip: string,
+        deviceId = randomUUID(),
     ): Promise<TokenPair> {
         const accessToken =
             jwtService.createAccessToken(userId);
 
         const createdRefreshToken =
-            jwtService.createRefreshToken(userId);
+            jwtService.createRefreshToken(userId, deviceId);
 
         await refreshTokenRepository.create({
             userId,
             tokenId: createdRefreshToken.tokenId,
+            deviceId,
+            deviceName,
+            ip,
             issuedAt: createdRefreshToken.issuedAt,
+            lastActiveDate: createdRefreshToken.issuedAt,
             expiresAt:
             createdRefreshToken.expiresAt,
             revokedAt: null,
@@ -61,21 +69,26 @@ export const authSessionService = {
             return null;
         }
 
-        // Старый токен становится невалидным.
-        // revoke вернёт false, если он уже был применён,
-        // отозван или истёк.
-        const revoked =
-            await refreshTokenRepository.revoke(
-                payload.tokenId,
-            );
+        const session = await refreshTokenRepository.findActiveByTokenId(payload.tokenId);
 
-        if (!revoked) {
+        if (!session || session.userId !== payload.userId || session.deviceId !== payload.deviceId) {
             return null;
         }
 
-        return this.createTokenPair(
-            payload.userId,
+        const accessToken = jwtService.createAccessToken(payload.userId);
+        const newRefreshToken = jwtService.createRefreshToken(payload.userId, payload.deviceId);
+        const rotated = await refreshTokenRepository.rotate(
+            payload.tokenId,
+            newRefreshToken.tokenId,
+            newRefreshToken.issuedAt,
+            newRefreshToken.expiresAt,
         );
+
+        if (!rotated) {
+            return null;
+        }
+
+        return {accessToken, refreshToken: newRefreshToken.token};
     },
 
     /**
@@ -96,5 +109,36 @@ export const authSessionService = {
         return refreshTokenRepository.revoke(
             payload.tokenId,
         );
+    },
+
+    async getActiveDevices(refreshToken: string) {
+        const payload = jwtService.verifyRefreshToken(refreshToken);
+
+        if (!payload || !await refreshTokenRepository.findActiveByTokenId(payload.tokenId)) {
+            return null;
+        }
+
+        return refreshTokenRepository.findActiveByUserId(payload.userId);
+    },
+
+    async deleteAllOtherDevices(refreshToken: string): Promise<boolean> {
+        const payload = jwtService.verifyRefreshToken(refreshToken);
+
+        if (!payload || !await refreshTokenRepository.findActiveByTokenId(payload.tokenId)) {
+            return false;
+        }
+
+        await refreshTokenRepository.deleteAllOtherDevices(payload.userId, payload.deviceId);
+        return true;
+    },
+
+    async deleteDevice(refreshToken: string, deviceId: string) {
+        const payload = jwtService.verifyRefreshToken(refreshToken);
+
+        if (!payload || !await refreshTokenRepository.findActiveByTokenId(payload.tokenId)) {
+            return "unauthorized" as const;
+        }
+
+        return refreshTokenRepository.deleteDevice(payload.userId, deviceId);
     },
 };

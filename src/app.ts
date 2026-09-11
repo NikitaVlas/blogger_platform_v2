@@ -8,6 +8,8 @@ dotenv.config();
 
 export const app = express();
 
+app.set("trust proxy", true);
+
 let databaseConnection: Promise<void> | null = null;
 
 export const ensureDatabaseConnection = async (): Promise<void> => {

@@ -6,6 +6,7 @@ import {usersRoutes} from "./modules/users/routes/users.routes";
 import {authRoutes} from "./modules/auth/routes/auth.routes";
 import {commentsRoutes} from "./modules/comments/routes/comments.routes";
 import {testingRoutes} from "./modules/testing/routes/testing.routes";
+import {securityRoutes} from "./modules/security/routes/security.routes";
 import cookieParser from "cookie-parser";
 
 
@@ -25,6 +26,7 @@ export const setupApp = (app: Express) => {
     app.use(RouterPath.auth, authRoutes);
     app.use(RouterPath.comments, commentsRoutes);
     app.use(RouterPath.testing, testingRoutes);
+    app.use(RouterPath.security, securityRoutes);
 
     return app;
 };
