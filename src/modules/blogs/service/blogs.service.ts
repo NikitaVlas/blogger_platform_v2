@@ -1,27 +1,31 @@
 import {BlogViewModel} from "../models/blog.view-model";
-import {blogsRepository} from "../repositories/blogs.repository";
+import {BlogsRepository} from "../repositories/blogs.repository";
 import {BlogInputModel} from "../models/blog.input-model";
 import {BlogPaginationViewModel} from "../models/blog.pagination-view-model";
 import {BlogQueryInputModel} from "../models/blog-query-input.model";
 
-export const blogsService = {
+export class BlogsService {
+    constructor(private readonly blogsRepository: BlogsRepository) {}
     async findAll(query: BlogQueryInputModel): Promise<BlogPaginationViewModel> {
-        return blogsRepository.findAll(query)
-    },
+        return this.blogsRepository.findAll(query)
+    }
 
     async create(newBlogData: BlogInputModel): Promise<BlogViewModel> {
-        return blogsRepository.create(newBlogData)
-    },
+        return this.blogsRepository.create(newBlogData)
+    }
 
     async findById(id: string): Promise<BlogViewModel | null> {
-        return blogsRepository.findById(id);
-    },
+        return this.blogsRepository.findById(id);
+    }
 
     async update(id: string, updatedBlogData: BlogInputModel): Promise<boolean> {
-        return blogsRepository.update(id, updatedBlogData)
-    },
+        return this.blogsRepository.update(id, updatedBlogData)
+    }
 
     async delete(id: string): Promise<boolean> {
-        return blogsRepository.delete(id)
+        return this.blogsRepository.delete(id)
     }
 }
+
+// Совместимость со старыми маршрутами на время поэтапной миграции.
+export const blogsService = new BlogsService(new BlogsRepository());

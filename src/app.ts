@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import { setupApp } from "./setup-app";
 import { rundb } from "./db/mongo.db";
 import { requestLogMiddleware } from "./core/middlewares/request-log.middleware";
+import "./composition-root/container";
 
 dotenv.config();
 

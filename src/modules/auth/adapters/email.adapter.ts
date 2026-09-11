@@ -87,4 +87,14 @@ export const emailAdapter = {
             `,
         });
     },
+
+    async sendPasswordRecoveryEmail(email: string, recoveryCode: string): Promise<void> {
+        if (process.env.NODE_ENV === "test") return;
+        const url = new URL(process.env.FRONTEND_RECOVERY_URL ?? "https://example.com/password-recovery");
+        url.searchParams.set("recoveryCode", recoveryCode);
+        await createTransporter().sendMail({
+            from: getRequiredEnv("EMAIL_FROM"), to: email, subject: "Password recovery",
+            html: `<h1>Password recovery</h1><p><a href="${url.toString()}">recovery password</a></p>`,
+        });
+    },
 };

@@ -67,6 +67,10 @@ export const usersService = {
                             null,
                         isConfirmed: true,
                     },
+                    passwordRecovery: {
+                        recoveryCode: null,
+                        expirationDate: null,
+                    },
                 });
         } catch (error: unknown) {
             if (

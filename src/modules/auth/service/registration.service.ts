@@ -80,6 +80,7 @@ export const registrationService = {
                     expirationDate,
                     isConfirmed: false,
                 },
+                passwordRecovery: {recoveryCode: null, expirationDate: null},
             });
         } catch (error: unknown) {
             if (

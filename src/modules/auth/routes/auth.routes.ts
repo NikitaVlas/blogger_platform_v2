@@ -6,8 +6,12 @@ import {bearerAuthMiddleware} from "../middlewares/bearer-auth.middleware";
 import {registrationConfirmationValidation} from "../validation/registration-confirmation.validation";
 import {userInputValidation} from "../../users/validation/userInput.validation";
 import {registrationEmailResendingValidation} from "../validation/registration-email-resending.validation";
+import {newPasswordValidation, passwordRecoveryValidation} from "../validation/password-recovery.validation";
 
 export const authRoutes = Router();
+
+authRoutes.post("/password-recovery", ...passwordRecoveryValidation, inputResultValidation, authController.passwordRecovery);
+authRoutes.post("/new-password", ...newPasswordValidation, inputResultValidation, authController.newPassword);
 
 authRoutes.post(
     "/login",

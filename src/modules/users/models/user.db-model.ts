@@ -13,6 +13,7 @@ export type UserDbModel = {
     createdAt: Date;
     passwordHash: string;
     emailConfirmation: EmailConfirmation;
+    passwordRecovery: { recoveryCode: string | null; expirationDate: Date | null };
 };
 
 export type UserInsertModel = Omit<UserDbModel, "_id">;

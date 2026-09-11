@@ -8,7 +8,7 @@ import {BlogQueryInputModel} from "../models/blog-query-input.model";
 import {toObjectId} from "../../../core/helpers/toObject";
 
 
-export const blogsRepository = {
+export class BlogsRepository {
     async findAll(query: BlogQueryInputModel): Promise<BlogPaginationViewModel> {
         const {searchNameTerm, sortBy, sortDirection, pageNumber, pageSize} = query;
 
@@ -38,7 +38,7 @@ export const blogsRepository = {
             totalCount,
             items: blogs.map(blogMapper)
         }
-    },
+    }
 
     async create(newBlogData: BlogInputModel): Promise<BlogViewModel> {
         const blogToInsert: BlogInsertModel = {
@@ -55,7 +55,7 @@ export const blogsRepository = {
             _id: result.insertedId,
             ...blogToInsert
         });
-    },
+    }
 
     async findById(id: string): Promise<BlogViewModel | null> {
         const objectId = toObjectId(id);
@@ -69,7 +69,7 @@ export const blogsRepository = {
         if(!blog) return null;
 
         return blogMapper(blog)
-    },
+    }
 
     async update(id: string, updatedBlogData: BlogInputModel): Promise<boolean> {
         const objectId = toObjectId(id);
@@ -90,7 +90,7 @@ export const blogsRepository = {
         );
 
         return updateResult.matchedCount  > 0;
-    },
+    }
 
     async delete(id: string): Promise<boolean> {
         const objectId = toObjectId(id);
@@ -103,4 +103,6 @@ export const blogsRepository = {
 
         return deleteResult.deletedCount > 0;
     }
-};
+}
+
+export const blogsRepository = new BlogsRepository();

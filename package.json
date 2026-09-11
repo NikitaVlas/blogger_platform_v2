@@ -18,10 +18,12 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-validator": "^7.3.2",
+    "inversify": "^8.2.3",
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.3.0",
     "mongoose": "^0.0.2-security",
-    "nodemailer": "^9.0.3"
+    "nodemailer": "^9.0.3",
+    "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
     "@types/bcrypt": "^6",

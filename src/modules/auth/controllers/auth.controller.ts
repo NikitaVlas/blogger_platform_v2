@@ -10,6 +10,7 @@ import {RegistrationConfirmationCodeModel} from "../models/registration-confirma
 import {RegistrationEmailResending} from "../models/registration-email-resending";
 import {APIErrorResult } from "../../../core/types/api-error-result";
 import { authSessionService } from "../service/auth-session.service";
+import { emailAdapter } from "../adapters/email.adapter";
 import {
     clearRefreshTokenCookieOptions,
     REFRESH_TOKEN_COOKIE_NAME,
@@ -327,5 +328,19 @@ export const authController = {
         return res.sendStatus(
             HttpStatus.NoContent,
         );
+    },
+
+    async passwordRecovery(req: Request, res: Response) {
+        const recovery = await authService.requestPasswordRecovery(req.body.email);
+        if (recovery) {
+            try { await emailAdapter.sendPasswordRecoveryEmail(recovery.email, recovery.code); }
+            catch (error) { console.error("Password recovery email sending failed", error); }
+        }
+        return res.sendStatus(HttpStatus.NoContent);
+    },
+
+    async newPassword(req: Request, res: Response) {
+        const updated = await authService.confirmPasswordRecovery(req.body.newPassword, req.body.recoveryCode);
+        return updated ? res.sendStatus(HttpStatus.NoContent) : res.sendStatus(HttpStatus.BadRequest);
     },
 };

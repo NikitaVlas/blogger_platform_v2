@@ -154,4 +154,14 @@ export const usersRepository = {
 
         return result.modifiedCount === 1;
     },
+
+    async setRecoveryCode(userId: ObjectId, recoveryCode: string, expirationDate: Date): Promise<boolean> {
+        const result = await userCollection.updateOne({_id: userId}, {$set: {"passwordRecovery.recoveryCode": recoveryCode, "passwordRecovery.expirationDate": expirationDate}});
+        return result.modifiedCount === 1;
+    },
+
+    async updatePasswordByRecoveryCode(recoveryCode: string, passwordHash: string): Promise<boolean> {
+        const result = await userCollection.updateOne({"passwordRecovery.recoveryCode": recoveryCode, "passwordRecovery.expirationDate": {$gt: new Date()}}, {$set: {passwordHash, "passwordRecovery.recoveryCode": null, "passwordRecovery.expirationDate": null}});
+        return result.modifiedCount === 1;
+    },
 };
