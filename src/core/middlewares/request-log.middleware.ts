@@ -4,6 +4,12 @@ import { HttpStatus } from "../types/http-statuses";
 
 const REQUEST_WINDOW_MS = 10_000;
 const MAX_REQUESTS_PER_WINDOW = 5;
+const RATE_LIMITED_AUTH_PATHS = new Set([
+    "/auth/login",
+    "/auth/registration",
+    "/auth/registration-confirmation",
+    "/auth/registration-email-resending",
+]);
 
 /**
  * Records an API request and exposes the number of matching requests made in
@@ -29,7 +35,10 @@ export const requestLogMiddleware = async (
 
         res.locals.requestCount = requestCount;
 
-        if (requestCount >= MAX_REQUESTS_PER_WINDOW) {
+        if (
+            RATE_LIMITED_AUTH_PATHS.has(URL) &&
+            requestCount >= MAX_REQUESTS_PER_WINDOW
+        ) {
             return res.sendStatus(HttpStatus.TooManyRequests);
         }
 

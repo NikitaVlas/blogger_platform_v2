@@ -50,6 +50,10 @@ export const emailAdapter = {
         email: string,
         code: string,
     ): Promise<void> {
+        if (process.env.NODE_ENV === "test") {
+            return;
+        }
+
         const transporter =
             createTransporter();
 
