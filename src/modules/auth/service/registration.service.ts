@@ -129,8 +129,7 @@ export const registrationService = {
             );
 
             return {
-                status:
-                    "email-send-error",
+                status: "success",
             };
         }
 
@@ -214,8 +213,7 @@ export const registrationService = {
             );
 
             return {
-                status:
-                    "email-send-error",
+                status: "success",
             };
         }
 
