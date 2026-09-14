@@ -10,7 +10,8 @@
     "dev": "nodemon --inspect --watch dist dist/index.js",
     "jest": "jest -i",
     "lint": "eslint --fix .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test": "npm run build && node tests/regression.cjs"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { testingController } from "../controllers/testing.controller";
+import { testingController } from "../../../composition-root/container";
 
 export const testingRoutes = Router();
 
 testingRoutes.delete(
-    "/all-data",
-    testingController.deleteAllData,
+  "/all-data",
+  testingController.deleteAllData.bind(testingController),
 );

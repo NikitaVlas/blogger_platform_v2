@@ -1,225 +1,169 @@
 import bcrypt from "bcrypt";
 import { randomUUID } from "node:crypto";
-import { usersRepository } from "../../users/repositories/users.repository";
+import { UsersRepository } from "../../users/repositories/users.repository";
 import { UserInputModel } from "../../users/models/user.input-model";
-import { emailAdapter } from "../adapters/email.adapter";
-import {MongoServerError} from "mongodb";
+import { EmailAdapter } from "../adapters/email.adapter";
+import { MongoServerError } from "mongodb";
 
 type RegistrationResult =
-    | { status: "success" }
-    | { status: "login-not-unique" }
-    | { status: "email-not-unique" }
-    | { status: "email-send-error" };
+  | { status: "success" }
+  | { status: "login-not-unique" }
+  | { status: "email-not-unique" }
+  | { status: "email-send-error" };
 
-type ConfirmationResult =
-    | { status: "success" }
-    | { status: "invalid-code" };
+type ConfirmationResult = { status: "success" } | { status: "invalid-code" };
 
 type ResendingResult =
-    | { status: "success" }
-    | { status: "email-not-found" }
-    | { status: "already-confirmed" }
-    | { status: "email-send-error" };
+  | { status: "success" }
+  | { status: "email-not-found" }
+  | { status: "already-confirmed" }
+  | { status: "email-send-error" };
 
 function createExpirationDate(): Date {
-    const expirationDate = new Date();
+  const expirationDate = new Date();
 
-    expirationDate.setHours(
-        expirationDate.getHours() + 1,
-    );
+  expirationDate.setHours(expirationDate.getHours() + 1);
 
-    return expirationDate;
+  return expirationDate;
 }
 
-export const registrationService = {
-    async register(
-        input: UserInputModel,
-    ): Promise<RegistrationResult> {
-        const userWithLogin =
-            await usersRepository.findByLogin(
-                input.login,
-            );
+export class RegistrationService {
+  constructor(
+    private readonly emailAdapter: EmailAdapter,
+    private readonly usersRepository: UsersRepository,
+  ) {}
+  async register(input: UserInputModel): Promise<RegistrationResult> {
+    const userWithLogin = await this.usersRepository.findByLogin(input.login);
 
-        if (userWithLogin) {
-            return {
-                status: "login-not-unique",
-            };
+    if (userWithLogin) {
+      return {
+        status: "login-not-unique",
+      };
+    }
+
+    const userWithEmail = await this.usersRepository.findByEmail(input.email);
+
+    if (userWithEmail) {
+      return {
+        status: "email-not-unique",
+      };
+    }
+
+    const passwordHash = await bcrypt.hash(input.password, 10);
+
+    const confirmationCode = randomUUID();
+
+    const expirationDate = createExpirationDate();
+
+    try {
+      await this.usersRepository.create({
+        login: input.login,
+        email: input.email,
+        passwordHash,
+        createdAt: new Date(),
+        emailConfirmation: {
+          confirmationCode,
+          expirationDate,
+          isConfirmed: false,
+        },
+        passwordRecovery: { recoveryCode: null, expirationDate: null },
+      });
+    } catch (error: unknown) {
+      if (error instanceof MongoServerError && error.code === 11000) {
+        const duplicatedField = Object.keys(error.keyPattern ?? {})[0];
+
+        if (duplicatedField === "login") {
+          return {
+            status: "login-not-unique",
+          };
         }
 
-        const userWithEmail =
-            await usersRepository.findByEmail(
-                input.email,
-            );
-
-        if (userWithEmail) {
-            return {
-                status: "email-not-unique",
-            };
+        if (duplicatedField === "email") {
+          return {
+            status: "email-not-unique",
+          };
         }
+      }
 
-        const passwordHash =
-            await bcrypt.hash(
-                input.password,
-                10,
-            );
+      throw error;
+    }
 
-        const confirmationCode =
-            randomUUID();
+    try {
+      await this.emailAdapter.sendRegistrationEmail(
+        input.email,
+        confirmationCode,
+      );
+    } catch (error: unknown) {
+      console.error("Registration email sending failed", error);
 
-        const expirationDate =
-            createExpirationDate();
+      return {
+        status: "success",
+      };
+    }
 
-        try {
-            await usersRepository.create({
-                login: input.login,
-                email: input.email,
-                passwordHash,
-                createdAt: new Date(),
-                emailConfirmation: {
-                    confirmationCode,
-                    expirationDate,
-                    isConfirmed: false,
-                },
-                passwordRecovery: {recoveryCode: null, expirationDate: null},
-            });
-        } catch (error: unknown) {
-            if (
-                error instanceof
-                MongoServerError &&
-                error.code === 11000
-            ) {
-                const duplicatedField =
-                    Object.keys(
-                        error.keyPattern ?? {},
-                    )[0];
+    return {
+      status: "success",
+    };
+  }
+  async confirmRegistration(code: string): Promise<ConfirmationResult> {
+    const confirmed = await this.usersRepository.confirmEmail(code);
 
-                if (
-                    duplicatedField ===
-                    "login"
-                ) {
-                    return {
-                        status:
-                            "login-not-unique",
-                    };
-                }
+    if (!confirmed) {
+      return {
+        status: "invalid-code",
+      };
+    }
 
-                if (
-                    duplicatedField ===
-                    "email"
-                ) {
-                    return {
-                        status:
-                            "email-not-unique",
-                    };
-                }
-            }
+    return {
+      status: "success",
+    };
+  }
+  async resendConfirmationEmail(email: string): Promise<ResendingResult> {
+    const user = await this.usersRepository.findByEmail(email);
 
-            throw error;
-        }
+    if (!user) {
+      return {
+        status: "email-not-found",
+      };
+    }
 
-        try {
-            await emailAdapter
-                .sendRegistrationEmail(
-                    input.email,
-                    confirmationCode,
-                );
-        } catch (error: unknown) {
-            console.error(
-                "Registration email sending failed",
-                error,
-            );
+    if (user.emailConfirmation.isConfirmed) {
+      return {
+        status: "already-confirmed",
+      };
+    }
 
-            return {
-                status: "success",
-            };
-        }
+    const confirmationCode = randomUUID();
 
-        return {
-            status: "success",
-        };
-    },
+    const expirationDate = createExpirationDate();
 
-    async confirmRegistration(
-        code: string,
-    ): Promise<ConfirmationResult> {
-        const confirmed =
-            await usersRepository
-                .confirmEmail(code);
+    const updated = await this.usersRepository.updateConfirmationCode(
+      user._id,
+      confirmationCode,
+      expirationDate,
+    );
 
-        if (!confirmed) {
-            return {
-                status: "invalid-code",
-            };
-        }
+    if (!updated) {
+      return {
+        status: "already-confirmed",
+      };
+    }
 
-        return {
-            status: "success",
-        };
-    },
+    try {
+      await this.emailAdapter.sendRegistrationEmail(
+        user.email,
+        confirmationCode,
+      );
+    } catch (error: unknown) {
+      console.error("Registration email resending failed", error);
 
-    async resendConfirmationEmail(
-        email: string,
-    ): Promise<ResendingResult> {
-        const user =
-            await usersRepository
-                .findByEmail(email);
+      return {
+        status: "success",
+      };
+    }
 
-        if (!user) {
-            return {
-                status: "email-not-found",
-            };
-        }
-
-        if (
-            user.emailConfirmation
-                .isConfirmed
-        ) {
-            return {
-                status:
-                    "already-confirmed",
-            };
-        }
-
-        const confirmationCode =
-            randomUUID();
-
-        const expirationDate =
-            createExpirationDate();
-
-        const updated =
-            await usersRepository
-                .updateConfirmationCode(
-                    user._id,
-                    confirmationCode,
-                    expirationDate,
-                );
-
-        if (!updated) {
-            return {
-                status:
-                    "already-confirmed",
-            };
-        }
-
-        try {
-            await emailAdapter
-                .sendRegistrationEmail(
-                    user.email,
-                    confirmationCode,
-                );
-        } catch (error: unknown) {
-            console.error(
-                "Registration email resending failed",
-                error,
-            );
-
-            return {
-                status: "success",
-            };
-        }
-
-        return {
-            status: "success",
-        };
-    },
-};
+    return {
+      status: "success",
+    };
+  }
+}

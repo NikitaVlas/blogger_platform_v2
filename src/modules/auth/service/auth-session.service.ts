@@ -1,144 +1,140 @@
-import { jwtService } from "./jwt.service";
-import { refreshTokenRepository } from "../repositories/refresh-token.repository";
-import { usersRepository } from "../../users/repositories/users.repository";
+import { JwtService } from "./jwt.service";
+import { RefreshTokenRepository } from "../repositories/refresh-token.repository";
+import { UsersRepository } from "../../users/repositories/users.repository";
 import { randomUUID } from "node:crypto";
 
 export type TokenPair = {
-    accessToken: string;
-    refreshToken: string;
+  accessToken: string;
+  refreshToken: string;
 };
 
-export const authSessionService = {
-    /**
-     * Создаёт пару токенов и сохраняет refresh-сессию.
-     */
-    async createTokenPair(
-        userId: string,
-        deviceName: string,
-        ip: string,
-        deviceId = randomUUID(),
-    ): Promise<TokenPair> {
-        const accessToken =
-            jwtService.createAccessToken(userId);
+export class AuthSessionService {
+  constructor(
+    private readonly refreshTokenRepository: RefreshTokenRepository,
+    private readonly jwtService: JwtService,
+    private readonly usersRepository: UsersRepository,
+  ) {}
+  async createTokenPair(
+    userId: string,
+    deviceName: string,
+    ip: string,
+    deviceId = randomUUID(),
+  ): Promise<TokenPair> {
+    const accessToken = this.jwtService.createAccessToken(userId);
 
-        const createdRefreshToken =
-            jwtService.createRefreshToken(userId, deviceId);
+    const createdRefreshToken = this.jwtService.createRefreshToken(
+      userId,
+      deviceId,
+    );
 
-        await refreshTokenRepository.create({
-            userId,
-            tokenId: createdRefreshToken.tokenId,
-            deviceId,
-            deviceName,
-            ip,
-            issuedAt: createdRefreshToken.issuedAt,
-            lastActiveDate: createdRefreshToken.issuedAt,
-            expiresAt:
-            createdRefreshToken.expiresAt,
-            revokedAt: null,
-        });
+    await this.refreshTokenRepository.create({
+      userId,
+      tokenId: createdRefreshToken.tokenId,
+      deviceId,
+      deviceName,
+      ip,
+      issuedAt: createdRefreshToken.issuedAt,
+      lastActiveDate: createdRefreshToken.issuedAt,
+      expiresAt: createdRefreshToken.expiresAt,
+      revokedAt: null,
+    });
 
-        return {
-            accessToken,
-            refreshToken:
-            createdRefreshToken.token,
-        };
-    },
+    return {
+      accessToken,
+      refreshToken: createdRefreshToken.token,
+    };
+  }
+  async refresh(refreshToken: string): Promise<TokenPair | null> {
+    const payload = this.jwtService.verifyRefreshToken(refreshToken);
 
-    /**
-     * Отзывает старый refresh token и создаёт новую пару.
-     */
-    async refresh(
-        refreshToken: string,
-    ): Promise<TokenPair | null> {
-        const payload =
-            jwtService.verifyRefreshToken(
-                refreshToken,
-            );
+    if (!payload) {
+      return null;
+    }
 
-        if (!payload) {
-            return null;
-        }
+    // Проверяем, что пользователь ещё существует.
+    const user = await this.usersRepository.findById(payload.userId);
 
-        // Проверяем, что пользователь ещё существует.
-        const user =
-            await usersRepository.findById(
-                payload.userId,
-            );
+    if (!user) {
+      return null;
+    }
 
-        if (!user) {
-            return null;
-        }
+    const session = await this.refreshTokenRepository.findActiveByTokenId(
+      payload.tokenId,
+    );
 
-        const session = await refreshTokenRepository.findActiveByTokenId(payload.tokenId);
+    if (
+      !session ||
+      session.userId !== payload.userId ||
+      session.deviceId !== payload.deviceId
+    ) {
+      return null;
+    }
 
-        if (!session || session.userId !== payload.userId || session.deviceId !== payload.deviceId) {
-            return null;
-        }
+    const accessToken = this.jwtService.createAccessToken(payload.userId);
+    const newRefreshToken = this.jwtService.createRefreshToken(
+      payload.userId,
+      payload.deviceId,
+    );
+    const rotated = await this.refreshTokenRepository.rotate(
+      payload.tokenId,
+      newRefreshToken.tokenId,
+      newRefreshToken.issuedAt,
+      newRefreshToken.expiresAt,
+    );
 
-        const accessToken = jwtService.createAccessToken(payload.userId);
-        const newRefreshToken = jwtService.createRefreshToken(payload.userId, payload.deviceId);
-        const rotated = await refreshTokenRepository.rotate(
-            payload.tokenId,
-            newRefreshToken.tokenId,
-            newRefreshToken.issuedAt,
-            newRefreshToken.expiresAt,
-        );
+    if (!rotated) {
+      return null;
+    }
 
-        if (!rotated) {
-            return null;
-        }
+    return { accessToken, refreshToken: newRefreshToken.token };
+  }
+  async logout(refreshToken: string): Promise<boolean> {
+    const payload = this.jwtService.verifyRefreshToken(refreshToken);
 
-        return {accessToken, refreshToken: newRefreshToken.token};
-    },
+    if (!payload) {
+      return false;
+    }
 
-    /**
-     * Отзывает refresh token при logout.
-     */
-    async logout(
-        refreshToken: string,
-    ): Promise<boolean> {
-        const payload =
-            jwtService.verifyRefreshToken(
-                refreshToken,
-            );
+    return this.refreshTokenRepository.revoke(payload.tokenId);
+  }
+  async getActiveDevices(refreshToken: string) {
+    const payload = this.jwtService.verifyRefreshToken(refreshToken);
 
-        if (!payload) {
-            return false;
-        }
+    if (
+      !payload ||
+      !(await this.refreshTokenRepository.findActiveByTokenId(payload.tokenId))
+    ) {
+      return null;
+    }
 
-        return refreshTokenRepository.revoke(
-            payload.tokenId,
-        );
-    },
+    return this.refreshTokenRepository.findActiveByUserId(payload.userId);
+  }
+  async deleteAllOtherDevices(refreshToken: string): Promise<boolean> {
+    const payload = this.jwtService.verifyRefreshToken(refreshToken);
 
-    async getActiveDevices(refreshToken: string) {
-        const payload = jwtService.verifyRefreshToken(refreshToken);
+    if (
+      !payload ||
+      !(await this.refreshTokenRepository.findActiveByTokenId(payload.tokenId))
+    ) {
+      return false;
+    }
 
-        if (!payload || !await refreshTokenRepository.findActiveByTokenId(payload.tokenId)) {
-            return null;
-        }
+    await this.refreshTokenRepository.deleteAllOtherDevices(
+      payload.userId,
+      payload.deviceId,
+    );
+    return true;
+  }
+  async deleteDevice(refreshToken: string, deviceId: string) {
+    const payload = this.jwtService.verifyRefreshToken(refreshToken);
 
-        return refreshTokenRepository.findActiveByUserId(payload.userId);
-    },
+    if (
+      !payload ||
+      !(await this.refreshTokenRepository.findActiveByTokenId(payload.tokenId))
+    ) {
+      return "unauthorized" as const;
+    }
 
-    async deleteAllOtherDevices(refreshToken: string): Promise<boolean> {
-        const payload = jwtService.verifyRefreshToken(refreshToken);
-
-        if (!payload || !await refreshTokenRepository.findActiveByTokenId(payload.tokenId)) {
-            return false;
-        }
-
-        await refreshTokenRepository.deleteAllOtherDevices(payload.userId, payload.deviceId);
-        return true;
-    },
-
-    async deleteDevice(refreshToken: string, deviceId: string) {
-        const payload = jwtService.verifyRefreshToken(refreshToken);
-
-        if (!payload || !await refreshTokenRepository.findActiveByTokenId(payload.tokenId)) {
-            return "unauthorized" as const;
-        }
-
-        return refreshTokenRepository.deleteDevice(payload.userId, deviceId);
-    },
-};
+    return this.refreshTokenRepository.deleteDevice(payload.userId, deviceId);
+  }
+}

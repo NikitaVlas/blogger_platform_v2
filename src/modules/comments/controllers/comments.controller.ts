@@ -1,158 +1,105 @@
 import { Request, Response } from "express";
 import { HttpStatus } from "../../../core/types/http-statuses";
 import { AuthRequest } from "../../auth/types/auth-request";
-import { PostsService, postService } from "../../posts/service/post.service";
-import { CommentsService, commentsService } from "../services/comments.service";
+import { PostsService } from "../../posts/service/post.service";
+import { CommentsService } from "../services/comments.service";
 import { getCommentsQueryParams } from "../helpers/get-comments-query-params";
 
 type CommentIdParams = {
-    id: string;
+  id: string;
 };
 
 type CommentActionParams = {
-    commentId: string;
+  commentId: string;
 };
 
 type PostCommentsParams = {
-    postId: string;
+  postId: string;
 };
 
 export class CommentsController {
-    constructor(private readonly service: CommentsService, private readonly postsService: PostsService) {}
-    async getById(
-        req: Request<CommentIdParams>,
-        res: Response,
-    ) {
-        const comment =
-            await this.service.findById(
-                req.params.id,
-            );
+  constructor(
+    private readonly service: CommentsService,
+    private readonly postsService: PostsService,
+  ) {}
+  async getById(req: Request<CommentIdParams>, res: Response) {
+    const comment = await this.service.findById(req.params.id);
 
-        if (!comment) {
-            return res.sendStatus(
-                HttpStatus.NotFound,
-            );
-        }
-
-        return res
-            .status(HttpStatus.OK)
-            .send(comment);
+    if (!comment) {
+      return res.sendStatus(HttpStatus.NotFound);
     }
 
-    async getForPost(
-        req: Request<PostCommentsParams>,
-        res: Response,
-    ) {
-        const post = await this.postsService.findById(
-            req.params.postId,
-        );
+    return res.status(HttpStatus.OK).send(comment);
+  }
 
-        if (!post) {
-            return res.sendStatus(
-                HttpStatus.NotFound,
-            );
-        }
+  async getForPost(req: Request<PostCommentsParams>, res: Response) {
+    const post = await this.postsService.findById(req.params.postId);
 
-        const query =
-            getCommentsQueryParams(req);
-
-        const comments =
-            await this.service.findForPost(
-                req.params.postId,
-                query,
-            );
-
-        return res
-            .status(HttpStatus.OK)
-            .send(comments);
+    if (!post) {
+      return res.sendStatus(HttpStatus.NotFound);
     }
 
-    async createForPost(
-        req: Request<PostCommentsParams>,
-        res: Response,
-    ) {
-        const post = await this.postsService.findById(
-            req.params.postId,
-        );
+    const query = getCommentsQueryParams(req);
 
-        if (!post) {
-            return res.sendStatus(
-                HttpStatus.NotFound,
-            );
-        }
+    const comments = await this.service.findForPost(req.params.postId, query);
 
-        const user =
-            (req as AuthRequest<PostCommentsParams>)
-                .user;
+    return res.status(HttpStatus.OK).send(comments);
+  }
 
-        const comment =
-            await this.service.create(
-                req.params.postId,
-                req.body.content,
-                user,
-            );
+  async createForPost(req: Request<PostCommentsParams>, res: Response) {
+    const post = await this.postsService.findById(req.params.postId);
 
-        return res
-            .status(HttpStatus.Created)
-            .send(comment);
+    if (!post) {
+      return res.sendStatus(HttpStatus.NotFound);
     }
 
-    async update(req: Request<CommentActionParams>, res: Response) {
-        const user =
-            (req as AuthRequest<CommentActionParams>)
-                .user;
+    const user = (req as AuthRequest<PostCommentsParams>).user;
 
-        const result =
-            await this.service.update(
-                req.params.commentId,
-                req.body.content,
-                user._id.toString(),
-            );
+    const comment = await this.service.create(
+      req.params.postId,
+      req.body.content,
+      user,
+    );
 
-        if (result.status === "not-found") {
-            return res.sendStatus(
-                HttpStatus.NotFound,
-            );
-        }
+    return res.status(HttpStatus.Created).send(comment);
+  }
 
-        if (result.status === "forbidden") {
-            return res.sendStatus(
-                HttpStatus.Forbidden,
-            );
-        }
+  async update(req: Request<CommentActionParams>, res: Response) {
+    const user = (req as AuthRequest<CommentActionParams>).user;
 
-        return res.sendStatus(
-            HttpStatus.NoContent,
-        );
+    const result = await this.service.update(
+      req.params.commentId,
+      req.body.content,
+      user._id.toString(),
+    );
+
+    if (result.status === "not-found") {
+      return res.sendStatus(HttpStatus.NotFound);
     }
 
-    async delete(req: Request<CommentActionParams>, res: Response) {
-        const user =
-            (req as AuthRequest<CommentActionParams>)
-                .user;
-
-        const result =
-            await this.service.delete(
-                req.params.commentId,
-                user._id.toString(),
-            );
-
-        if (result.status === "not-found") {
-            return res.sendStatus(
-                HttpStatus.NotFound,
-            );
-        }
-
-        if (result.status === "forbidden") {
-            return res.sendStatus(
-                HttpStatus.Forbidden,
-            );
-        }
-
-        return res.sendStatus(
-            HttpStatus.NoContent,
-        );
+    if (result.status === "forbidden") {
+      return res.sendStatus(HttpStatus.Forbidden);
     }
+
+    return res.sendStatus(HttpStatus.NoContent);
+  }
+
+  async delete(req: Request<CommentActionParams>, res: Response) {
+    const user = (req as AuthRequest<CommentActionParams>).user;
+
+    const result = await this.service.delete(
+      req.params.commentId,
+      user._id.toString(),
+    );
+
+    if (result.status === "not-found") {
+      return res.sendStatus(HttpStatus.NotFound);
+    }
+
+    if (result.status === "forbidden") {
+      return res.sendStatus(HttpStatus.Forbidden);
+    }
+
+    return res.sendStatus(HttpStatus.NoContent);
+  }
 }
-
-export const commentsController = new CommentsController(commentsService, postService);

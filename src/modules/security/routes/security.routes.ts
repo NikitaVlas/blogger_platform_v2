@@ -1,8 +1,14 @@
 import { Router } from "express";
-import { authController } from "../../auth/controllers/auth.controller";
+import { authController } from "../../../composition-root/container";
 
 export const securityRoutes = Router();
 
-securityRoutes.get("/devices", authController.getDevices);
-securityRoutes.delete("/devices", authController.deleteAllOtherDevices);
-securityRoutes.delete("/devices/:deviceId", authController.deleteDevice);
+securityRoutes.get("/devices", authController.getDevices.bind(authController));
+securityRoutes.delete(
+  "/devices",
+  authController.deleteAllOtherDevices.bind(authController),
+);
+securityRoutes.delete(
+  "/devices/:deviceId",
+  authController.deleteDevice.bind(authController),
+);

@@ -1,70 +1,68 @@
-import {HttpStatus} from "../../../core/types/http-statuses";
-import {PostsService, postService} from "../service/post.service";
+import { HttpStatus } from "../../../core/types/http-statuses";
+import { PostsService } from "../service/post.service";
 import { Request, Response } from "express";
-import {getPostsQueryParams} from "../helpers/get-posts-query-params";
+import { getPostsQueryParams } from "../helpers/get-posts-query-params";
 
 type PostIdParams = {
-    id: string;
+  id: string;
 };
 
 export class PostsController {
-    constructor(private readonly service: PostsService) {}
-    async getAllPosts(req: Request, res: Response) {
-        const query = getPostsQueryParams(req);
-        const posts = await this.service.findAll(query);
+  constructor(private readonly service: PostsService) {}
+  async getAllPosts(req: Request, res: Response) {
+    const query = getPostsQueryParams(req);
+    const posts = await this.service.findAll(query);
 
-        return res.status(HttpStatus.OK).send(posts);
+    return res.status(HttpStatus.OK).send(posts);
+  }
+
+  async createPost(req: Request, res: Response) {
+    const createdPost = await this.service.create(req.body);
+
+    if (!createdPost) {
+      return res.status(HttpStatus.BadRequest).send({
+        errorsMessages: [
+          {
+            field: "blogId",
+            message: "blogId must reference an existing blog",
+          },
+        ],
+      });
     }
 
-    async createPost(req: Request, res: Response) {
-        const createdPost = await this.service.create(req.body);
+    res.status(HttpStatus.Created).send(createdPost);
+  }
 
-        if (!createdPost) {
-            return res.status(HttpStatus.BadRequest).send({
-                errorsMessages: [
-                    {
-                        field: "blogId",
-                        message: "blogId must reference an existing blog",
-                    },
-                ],
-            });
-        }
+  async getPostById(req: Request<PostIdParams>, res: Response) {
+    const post = await this.service.findById(req.params.id);
 
-        res.status(HttpStatus.Created).send(createdPost)
+    if (!post) {
+      res.sendStatus(HttpStatus.NotFound);
+      return;
     }
 
-    async getPostById(req: Request<PostIdParams>, res: Response) {
-        const post = await this.service.findById(req.params.id);
+    res.status(HttpStatus.OK).send(post);
+  }
 
-        if(!post) {
-            res.sendStatus(HttpStatus.NotFound)
-            return
-        }
+  async updatePost(req: Request<PostIdParams>, res: Response) {
+    const isUpdated = await this.service.update(req.params.id, req.body);
 
-        res.status(HttpStatus.OK).send(post)
+    if (!isUpdated) {
+      res.sendStatus(HttpStatus.NotFound);
+      return;
     }
 
-    async updatePost(req: Request<PostIdParams>, res: Response) {
-        const isUpdated = await this.service.update(req.params.id, req.body);
+    res.sendStatus(HttpStatus.NoContent);
+  }
 
-        if(!isUpdated) {
-            res.sendStatus(HttpStatus.NotFound)
-            return
-        }
+  async deletePost(req: Request<PostIdParams>, res: Response) {
+    const isDeleted = await this.service.delete(req.params.id);
 
-        res.sendStatus(HttpStatus.NoContent)
+    if (!isDeleted) {
+      res.sendStatus(HttpStatus.NotFound);
+      return;
     }
 
-    async deletePost(req: Request<PostIdParams>, res: Response) {
-        const isDeleted = await this.service.delete(req.params.id);
-
-        if(!isDeleted) {
-            res.sendStatus(HttpStatus.NotFound)
-            return
-        }
-
-        res.sendStatus(HttpStatus.NoContent)
-    }
+    res.sendStatus(HttpStatus.NoContent);
+  }
 }
-
-export const postController = new PostsController(postService);
