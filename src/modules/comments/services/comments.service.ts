@@ -9,28 +9,29 @@ export type ChangeCommentResult =
     | { status: "not-found" }
     | { status: "forbidden" };
 
-export const commentsService = {
+export class CommentsService {
+    constructor(private readonly repository = commentsRepository) {}
     async findById(
         id: string,
     ): Promise<CommentViewModel | null> {
-        return commentsRepository.findById(id);
-    },
+        return this.repository.findById(id);
+    }
 
     async findForPost(
         postId: string,
         query: CommentQueryInputModel,
     ): Promise<CommentPaginationViewModel> {
-        return commentsRepository.findForPost(
+        return this.repository.findForPost(
             postId,
             query,
         );
-    },
+    }
 
     async create(postId: string,
         content: string,
         user: UserDbModel,
     ): Promise<CommentViewModel> {
-        return commentsRepository.create({
+        return this.repository.create({
             postId,
             content,
             commentatorInfo: {
@@ -39,11 +40,11 @@ export const commentsService = {
             },
             createdAt: new Date(),
         });
-    },
+    }
 
     async update(commentId: string, content: string, currentUserId: string): Promise<ChangeCommentResult> {
         const comment =
-            await commentsRepository.findDbById(
+            await this.repository.findDbById(
                 commentId,
             );
 
@@ -62,7 +63,7 @@ export const commentsService = {
             };
         }
 
-        await commentsRepository.update(
+        await this.repository.update(
             commentId,
             content,
         );
@@ -70,10 +71,10 @@ export const commentsService = {
         return {
             status: "success",
         };
-    },
+    }
 
     async delete(commentId: string, currentUserId: string): Promise<ChangeCommentResult> {
-        const comment = await commentsRepository.findDbById(commentId);
+        const comment = await this.repository.findDbById(commentId);
 
         if (!comment) {
             return {
@@ -89,10 +90,12 @@ export const commentsService = {
             };
         }
 
-        await commentsRepository.delete(commentId);
+        await this.repository.delete(commentId);
 
         return {
             status: "success",
         };
-    },
-};
+    }
+}
+
+export const commentsService = new CommentsService();

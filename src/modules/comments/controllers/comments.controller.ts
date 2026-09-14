@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import { HttpStatus } from "../../../core/types/http-statuses";
 import { AuthRequest } from "../../auth/types/auth-request";
-import { postService } from "../../posts/service/post.service";
-import { commentsService } from "../services/comments.service";
+import { PostsService, postService } from "../../posts/service/post.service";
+import { CommentsService, commentsService } from "../services/comments.service";
 import { getCommentsQueryParams } from "../helpers/get-comments-query-params";
 
 type CommentIdParams = {
@@ -17,13 +17,14 @@ type PostCommentsParams = {
     postId: string;
 };
 
-export const commentsController = {
+export class CommentsController {
+    constructor(private readonly service: CommentsService, private readonly postsService: PostsService) {}
     async getById(
         req: Request<CommentIdParams>,
         res: Response,
     ) {
         const comment =
-            await commentsService.findById(
+            await this.service.findById(
                 req.params.id,
             );
 
@@ -36,13 +37,13 @@ export const commentsController = {
         return res
             .status(HttpStatus.OK)
             .send(comment);
-    },
+    }
 
     async getForPost(
         req: Request<PostCommentsParams>,
         res: Response,
     ) {
-        const post = await postService.findById(
+        const post = await this.postsService.findById(
             req.params.postId,
         );
 
@@ -56,7 +57,7 @@ export const commentsController = {
             getCommentsQueryParams(req);
 
         const comments =
-            await commentsService.findForPost(
+            await this.service.findForPost(
                 req.params.postId,
                 query,
             );
@@ -64,13 +65,13 @@ export const commentsController = {
         return res
             .status(HttpStatus.OK)
             .send(comments);
-    },
+    }
 
     async createForPost(
         req: Request<PostCommentsParams>,
         res: Response,
     ) {
-        const post = await postService.findById(
+        const post = await this.postsService.findById(
             req.params.postId,
         );
 
@@ -85,7 +86,7 @@ export const commentsController = {
                 .user;
 
         const comment =
-            await commentsService.create(
+            await this.service.create(
                 req.params.postId,
                 req.body.content,
                 user,
@@ -94,7 +95,7 @@ export const commentsController = {
         return res
             .status(HttpStatus.Created)
             .send(comment);
-    },
+    }
 
     async update(req: Request<CommentActionParams>, res: Response) {
         const user =
@@ -102,7 +103,7 @@ export const commentsController = {
                 .user;
 
         const result =
-            await commentsService.update(
+            await this.service.update(
                 req.params.commentId,
                 req.body.content,
                 user._id.toString(),
@@ -123,7 +124,7 @@ export const commentsController = {
         return res.sendStatus(
             HttpStatus.NoContent,
         );
-    },
+    }
 
     async delete(req: Request<CommentActionParams>, res: Response) {
         const user =
@@ -131,7 +132,7 @@ export const commentsController = {
                 .user;
 
         const result =
-            await commentsService.delete(
+            await this.service.delete(
                 req.params.commentId,
                 user._id.toString(),
             );
@@ -151,5 +152,7 @@ export const commentsController = {
         return res.sendStatus(
             HttpStatus.NoContent,
         );
-    },
-};
+    }
+}
+
+export const commentsController = new CommentsController(commentsService, postService);

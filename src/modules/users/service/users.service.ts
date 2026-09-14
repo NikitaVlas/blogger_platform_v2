@@ -11,16 +11,17 @@ type CreateUserResult =
     | { status: "login-not-unique" }
     | { status: "email-not-unique" };
 
-export const usersService = {
+export class UsersService {
+    constructor(private readonly repository = usersRepository) {}
     async findAll(query: UserQueryInputModel):Promise<UserPaginationViewModel> {
-        return usersRepository.findAll(query)
-    },
+        return this.repository.findAll(query)
+    }
 
     async create(
         newUserData: UserInputModel,
     ): Promise<CreateUserResult> {
         const userWithLogin =
-            await usersRepository.findByLogin(
+            await this.repository.findByLogin(
                 newUserData.login,
             );
 
@@ -32,7 +33,7 @@ export const usersService = {
         }
 
         const userWithEmail =
-            await usersRepository.findByEmail(
+            await this.repository.findByEmail(
                 newUserData.email,
             );
 
@@ -53,7 +54,7 @@ export const usersService = {
 
         try {
             user =
-                await usersRepository.create({
+                await this.repository.create({
                     login:
                     newUserData.login,
                     email:
@@ -111,9 +112,11 @@ export const usersService = {
             status: "success",
             user,
         };
-    },
+    }
 
     async delete(id: string): Promise<boolean> {
-        return usersRepository.delete(id)
+        return this.repository.delete(id)
     }
 }
+
+export const usersService = new UsersService();

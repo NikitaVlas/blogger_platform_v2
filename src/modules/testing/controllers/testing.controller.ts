@@ -7,7 +7,7 @@ import {
 } from "../../../db/mongo.db";
 import { HttpStatus } from "../../../core/types/http-statuses";
 
-export const testingController = {
+export class TestingController {
     async deleteAllData(
         req: Request,
         res: Response,
@@ -24,5 +24,7 @@ export const testingController = {
         return res.sendStatus(
             HttpStatus.NoContent,
         );
-    },
-};
+    }
+}
+
+export const testingController = new TestingController();
