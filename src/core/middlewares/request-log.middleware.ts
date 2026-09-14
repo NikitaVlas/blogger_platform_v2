@@ -9,6 +9,8 @@ const RATE_LIMITED_AUTH_PATHS = new Set([
     "/auth/registration",
     "/auth/registration-confirmation",
     "/auth/registration-email-resending",
+    "/auth/password-recovery",
+    "/auth/new-password",
 ]);
 
 /**

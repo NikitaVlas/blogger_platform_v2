@@ -341,6 +341,14 @@ export const authController = {
 
     async newPassword(req: Request, res: Response) {
         const updated = await authService.confirmPasswordRecovery(req.body.newPassword, req.body.recoveryCode);
-        return updated ? res.sendStatus(HttpStatus.NoContent) : res.sendStatus(HttpStatus.BadRequest);
+        if (!updated) {
+            return res.status(HttpStatus.BadRequest).send({
+                errorsMessages: [{
+                    field: "recoveryCode",
+                    message: "Recovery code is incorrect, expired or already applied",
+                }],
+            });
+        }
+        return res.sendStatus(HttpStatus.NoContent);
     },
 };

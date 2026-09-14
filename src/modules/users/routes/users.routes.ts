@@ -12,16 +12,16 @@ usersRoutes.get('/',
     basicAdminGuardMiddleware,
     ...userQueryValidation,
     inputResultValidation,
-    usersController.getAllUsers);
+    usersController.getAllUsers.bind(usersController));
 
 usersRoutes.post('/',
     basicAdminGuardMiddleware,
     ...userInputValidation,
     inputResultValidation,
-    usersController.postUser
+    usersController.postUser.bind(usersController)
 )
 
 usersRoutes.delete('/:id',
     basicAdminGuardMiddleware,
-    usersController.deleteUser
+    usersController.deleteUser.bind(usersController)
 )
