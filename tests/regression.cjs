@@ -62,19 +62,28 @@ root.usersRepository.findAll = async () => ({
     ? [{ id: user._id.toString(), login: user.login, email: user.email }]
     : [],
 });
-root.usersRepository.setRecoveryCode = async (_, code, date) => {
-  user.passwordRecovery = { recoveryCode: code, expirationDate: date };
-  return true;
-};
-root.usersRepository.updatePasswordByRecoveryCode = async (code, hash) => {
-  if (
-    user.passwordRecovery.recoveryCode !== code ||
-    user.passwordRecovery.expirationDate <= new Date()
-  )
-    return false;
-  user.passwordHash = hash;
-  user.passwordRecovery = { recoveryCode: null, expirationDate: null };
-  return true;
+// Run the real recovery repository methods against an in-memory collection boundary.
+db.userCollection = {
+  async updateOne(filter, update) {
+    const matches = Object.entries(filter).every(([key, expected]) => {
+      const actual = key
+        .split(".")
+        .reduce((value, part) => value?.[part], user);
+      if (expected && typeof expected === "object" && "$gt" in expected)
+        return actual > expected.$gt;
+      return actual instanceof ObjectId
+        ? actual.equals(expected)
+        : actual === expected;
+    });
+    if (!matches) return { modifiedCount: 0 };
+    for (const [key, value] of Object.entries(update.$set)) {
+      const parts = key.split(".");
+      const last = parts.pop();
+      const target = parts.reduce((obj, part) => (obj[part] ??= {}), user);
+      target[last] = value;
+    }
+    return { modifiedCount: 1 };
+  },
 };
 root.refreshTokenRepository.create = async () => {};
 root.emailAdapter.sendPasswordRecoveryEmail = async (email, code) => {
@@ -126,6 +135,35 @@ const admin = (method, url) => request(app)[method](url).auth("test", "test");
     .send({ email: user.email })
     .expect(204);
   assert.equal(sent.length, 1);
+  logs = [];
+  await request(app)
+    .post("/auth/password-recovery")
+    .send({ email: user.email })
+    .expect(204);
+  const replacedCode = user.passwordRecovery.recoveryCode;
+  await request(app)
+    .post("/auth/password-recovery")
+    .send({ email: user.email })
+    .expect(204);
+  assert.notEqual(user.passwordRecovery.recoveryCode, replacedCode);
+  await request(app)
+    .post("/auth/new-password")
+    .send({ newPassword: "replacement", recoveryCode: replacedCode })
+    .expect(400);
+  const expiredCode = user.passwordRecovery.recoveryCode;
+  user.passwordRecovery.expirationDate = new Date(Date.now() - 1);
+  const invalid = await request(app)
+    .post("/auth/new-password")
+    .send({ newPassword: "replacement", recoveryCode: expiredCode })
+    .expect(400);
+  assert.equal(invalid.body.errorsMessages[0].field, "recoveryCode");
+  assert(await bcrypt.compare("oldpassword", user.passwordHash));
+  logs = [];
+  await request(app)
+    .post("/auth/password-recovery")
+    .send({ email: user.email })
+    .expect(204);
+  sent = [sent.at(-1)];
   assert.equal(sent[0].to, user.email);
   const code = new URL(
     sent[0].html.match(/href="([^"]+)"/)[1],
@@ -169,8 +207,44 @@ const admin = (method, url) => request(app)[method](url).auth("test", "test");
     for (let i = 0; i < 5; i++)
       await request(app).post(url).send(body).expect(status);
     await request(app).post(url).send(body).expect(429);
+    await request(app)
+      .post(url + "?attempt=another")
+      .send(body)
+      .expect(429);
+    await request(app)
+      .post(url.toUpperCase() + "/")
+      .send(body)
+      .expect(429);
     logs.forEach((e) => (e.date = new Date(Date.now() - 11000)));
     await request(app).post(url).send(body).expect(status);
+  }
+  logs = [];
+  const malformedBodies = [
+    ["/auth/password-recovery", {}, ["email"]],
+    ["/auth/password-recovery", { email: 123 }, ["email"]],
+    ["/auth/password-recovery", { email: "invalid" }, ["email"]],
+    ["/auth/new-password", {}, ["newPassword", "recoveryCode"]],
+    [
+      "/auth/new-password",
+      { newPassword: "a".repeat(21), recoveryCode: "valid-code" },
+      ["newPassword"],
+    ],
+    [
+      "/auth/new-password",
+      { newPassword: "password", recoveryCode: {} },
+      ["recoveryCode"],
+    ],
+  ];
+  for (const [url, body, fields] of malformedBodies) {
+    logs = [];
+    const response = await request(app).post(url).send(body).expect(400);
+    assert.deepEqual(
+      response.body.errorsMessages.map((e) => e.field).sort(),
+      fields.sort(),
+    );
+    assert(
+      response.body.errorsMessages.every((e) => typeof e.message === "string"),
+    );
   }
   logs = [];
   root.postService.findAll = async () => ({ items: [] });
@@ -184,6 +258,10 @@ const admin = (method, url) => request(app)[method](url).auth("test", "test");
   await request(app).get("/comments/507f1f77bcf86cd799439011").expect(404);
   // Every registered class controller method must retain its instance as an Express callback.
   for (const router of [
+    require("../dist/modules/blogs/routes/blogs.routes").blogsRoutes,
+    require("../dist/modules/users/routes/users.routes").usersRoutes,
+    require("../dist/modules/security/routes/security.routes").securityRoutes,
+    require("../dist/modules/testing/routes/testing.routes").testingRoutes,
     require("../dist/modules/posts/routes/posts.routes").postsRoutes,
     require("../dist/modules/comments/routes/comments.routes").commentsRoutes,
     require("../dist/modules/auth/routes/auth.routes").authRoutes,
