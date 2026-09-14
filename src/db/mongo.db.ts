@@ -31,7 +31,10 @@ export async function rundb(url: string) {
         return
     }
 
-    client = new MongoClient(url);
+    client = new MongoClient(url, {
+        serverSelectionTimeoutMS: 5_000,
+        connectTimeoutMS: 5_000,
+    });
     await client.connect();
 
     db = client.db("blogers-platform_v2");
