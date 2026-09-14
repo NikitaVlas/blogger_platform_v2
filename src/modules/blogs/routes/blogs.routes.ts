@@ -12,21 +12,21 @@ export const blogsRoutes = Router();
 blogsRoutes.get('/',
     ...blogQueryValidation,
     inputResultValidation,
-    blogController.getBlogs
+    blogController.getBlogs.bind(blogController)
 )
 
 blogsRoutes.post('/',
     basicAdminGuardMiddleware,
     ...blogInputValidation,
     inputResultValidation,
-    blogController.postBlog
+    blogController.postBlog.bind(blogController)
 )
 
 blogsRoutes.get(
     "/:blogId/posts",
     ...postQueryValidation,
     inputResultValidation,
-    blogController.getPostsForBlog,
+    blogController.getPostsForBlog.bind(blogController),
 );
 
 blogsRoutes.post(
@@ -34,21 +34,21 @@ blogsRoutes.post(
     basicAdminGuardMiddleware,
     ...blogPostInputValidation,
     inputResultValidation,
-    blogController.createPostForBlog,
+    blogController.createPostForBlog.bind(blogController),
 );
 
 blogsRoutes.get('/:id',
-    blogController.getBlogById
+    blogController.getBlogById.bind(blogController)
 )
 
 blogsRoutes.put('/:id',
     basicAdminGuardMiddleware,
     ...blogInputValidation,
     inputResultValidation,
-    blogController.updateBlog
+    blogController.updateBlog.bind(blogController)
 )
 
 blogsRoutes.delete('/:id',
     basicAdminGuardMiddleware,
-    blogController.deleteBlog
+    blogController.deleteBlog.bind(blogController)
 )
